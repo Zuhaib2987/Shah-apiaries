@@ -21,7 +21,9 @@
   "vars": {
     "SITE_URL": "https://shahapiaries.in"
   },
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
+  // Keep variables added in the Cloudflare dashboard when deploying from GitHub.
+  "keep_vars": true
   // Secrets (set in Cloudflare dashboard, never in this file):
   //   RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, RAZORPAY_WEBHOOK_SECRET,
   //   SESSION_SECRET, ADMIN_USERS
