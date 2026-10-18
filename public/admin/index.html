@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Orders · Shah Apiaries</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital@1&family=Nunito+Sans:opsz,wght@6..12,300;6..12,400;6..12,600;6..12,700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Admin: phone-first order desk. List left, detail right on laptops; detail full-screen on phones. */
+:root{
+  --bg:#F7F6F2; --surface:#FFFFFF; --sunk:#F1EFE9; --ink:#1E1E1E; --muted:#5E5E5E; --line:#E6E3DC;
+  --honey:#F2C230; --honey-ink:#7A5800; --honey-soft:#FFF7DB; --pine:#1F4733;
+  --ok:#2F7A4C; --ok-soft:#E6F2EA; --warn:#9A5B00; --warn-soft:#FDF0DC; --bad:#B3261E; --bad-soft:#FBE9E7; --info:#24548F; --info-soft:#E7EFF9;
+  --f-display:"Adobe Caslon Pro","Libre Caslon Text",Georgia,serif;
+  --f-body:"Avenir","Avenir Next","Nunito Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--honey);outline-offset:2px;border-radius:6px}
+h1,h2,h3{font-family:var(--f-display);font-style:italic;font-weight:400;margin:0;line-height:1.15}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:999px;padding:10px 18px;font-weight:600;text-decoration:none;white-space:nowrap}
+.btn-honey{background:var(--honey);color:#1E1E1E}
+.btn-dark{background:var(--ink);color:#fff}
+.btn-ghost{background:var(--surface);border:1.5px solid var(--line);color:var(--ink)}
+.btn-danger{background:var(--surface);border:1.5px solid var(--bad-soft);color:var(--bad)}
+.btn-sm{padding:6px 12px;font-size:.84rem}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+input,select,textarea{width:100%;border:1.5px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px;min-width:0}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--honey)}
+label{font-size:.8rem;font-weight:600;display:block;margin-bottom:4px}
+.err{color:var(--bad);font-size:.85rem}
+
+/* login */
+.login{min-height:100%;display:grid;place-items:center;padding:24px max(16px,env(safe-area-inset-left))}
+.login form{width:min(380px,100%);background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:28px;display:grid;gap:14px;border-top:4px solid var(--honey)}
+.brand{display:flex;align-items:center;gap:8px}
+.brand svg{width:44px;height:44px;flex:none}
+.brand b{font-family:var(--f-display);font-style:italic;font-weight:400;font-size:1.35rem}
+.brand small{display:block;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+
+/* app shell */
+.top{position:sticky;top:0;z-index:20;background:var(--surface);border-top:2px solid var(--honey);border-bottom:1px solid var(--line);padding:10px max(16px,env(safe-area-inset-right)) 10px max(16px,env(safe-area-inset-left));display:flex;align-items:center;gap:12px}
+.top .grow{flex:1}
+.top .who{font-size:.85rem;color:var(--muted)}
+@media (max-width:440px){.top .who{display:none}.top .brand small{display:none}}
+.wrap{max-width:1280px;margin:0 auto;padding:16px max(16px,env(safe-area-inset-right)) 40px max(16px,env(safe-area-inset-left))}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.stat span{display:block;font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.stat b{font-family:var(--f-display);font-style:italic;font-weight:400;font-size:1.6rem;font-variant-numeric:tabular-nums}
+.stat.attn{background:var(--honey-soft);border-color:#F3DE9A}
+@media (max-width:700px){.stats{grid-template-columns:1fr 1fr}}
+.tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:.85rem;font-weight:600;display:flex;gap:6px;align-items:center}
+.tab[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.tab i{font-style:normal;font-size:.72rem;background:var(--sunk);color:var(--ink);border-radius:999px;padding:0 7px;min-width:20px;text-align:center}
+.tab[aria-pressed="true"] i{background:#fff}
+.tools{display:flex;gap:8px;margin:12px 0}
+.tools input{flex:1}
+.layout{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+@media (min-width:1000px){.layout{grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr)}.detail-pane{position:sticky;top:76px;max-height:calc(100vh - 92px);overflow:auto}}
+
+.list{display:grid;gap:8px}
+.row{display:grid;grid-template-columns:1fr auto;gap:4px 12px;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:12px 14px;width:100%}
+.row[aria-current="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.row .id{font-family:var(--f-mono);font-size:.8rem;color:var(--muted)}
+.row .nm{font-weight:600}
+.row .amt{font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
+.row .meta{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.8rem;color:var(--muted)}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;font-weight:700;letter-spacing:.04em;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.s-pending_payment{background:var(--warn-soft);color:var(--warn)}
+.s-placed{background:var(--honey-soft);color:var(--honey-ink)}
+.s-confirmed,.s-packed{background:var(--info-soft);color:var(--info)}
+.s-shipped{background:#EFE9F8;color:#5B3D8F}
+.s-delivered{background:var(--ok-soft);color:var(--ok)}
+.s-cancelled{background:var(--sunk);color:var(--muted)}
+.p-paid{background:var(--ok-soft);color:var(--ok)}
+.p-cod{background:var(--sunk);color:var(--ink)}
+.p-pending,.p-awaiting_link{background:var(--warn-soft);color:var(--warn)}
+.p-failed{background:var(--bad-soft);color:var(--bad)}
+.p-refunded{background:var(--sunk);color:var(--muted)}
+.empty{border:1.5px dashed var(--line);border-radius:14px;padding:28px;text-align:center;color:var(--muted)}
+
+/* detail */
+.detail{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.dh{padding:16px 18px;border-bottom:1px solid var(--line);display:grid;gap:8px}
+.dh .line1{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.sec{padding:14px 18px;border-bottom:1px solid var(--line);display:grid;gap:10px}
+.sec:last-child{border-bottom:0}
+.sec h3{font-size:1.1rem}
+.kv{display:grid;grid-template-columns:110px 1fr;gap:4px 12px;font-size:.92rem}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.items .it{display:flex;justify-content:space-between;gap:10px;font-size:.92rem;padding:4px 0}
+.sum{display:flex;justify-content:space-between;font-variant-numeric:tabular-nums;font-size:.92rem}
+.sum.total{font-weight:700;font-size:1rem;border-top:1px solid var(--line);padding-top:6px}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.timeline{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.timeline li{display:grid;grid-template-columns:12px 1fr;gap:10px;font-size:.88rem}
+.timeline li::before{content:"";width:10px;height:11px;margin-top:5px;background:var(--honey);clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)}
+.timeline li.priv::before{background:var(--line)}
+.timeline small{display:block;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:520px){.grid2{grid-template-columns:1fr}}
+.confirm{background:var(--bad-soft);border-radius:12px;padding:12px;display:grid;gap:8px}
+.back{display:none}
+@media (max-width:999px){
+  .detail-pane{position:fixed;inset:0;z-index:30;background:var(--bg);overflow:auto;padding:0 0 calc(24px + env(safe-area-inset-bottom))}
+  .detail{border-radius:0;border:0;min-height:100%}
+  .back{display:inline-flex}
+  .dh{position:sticky;top:0;background:var(--surface);z-index:2;border-top:2px solid var(--honey)}
+}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translate(-50%,10px);opacity:0;background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-weight:600;font-size:.9rem;transition:.2s;pointer-events:none;z-index:50;max-width:calc(100vw - 32px)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+
+<section class="login" id="loginView" hidden>
+  <form id="loginForm" novalidate>
+    <div class="brand"><svg viewBox="0 0 100 100" aria-hidden="true"><path id="leafPath" fill="#FBE5A0"/><path id="combPath" fill="#F2C230" stroke="#fff" stroke-width="2"/></svg><span><b>Shah Apiaries</b><small>Order desk</small></span></div>
+    <h1 style="font-size:1.7rem">Log in</h1>
+    <div><label for="lu">Username</label><input id="lu" autocomplete="username" autocapitalize="none"></div>
+    <div><label for="lp">Password</label><input id="lp" type="password" autocomplete="current-password"></div>
+    <p class="err" id="loginErr" hidden></p>
+    <button class="btn btn-dark" type="submit">Log in</button>
+  </form>
+</section>
+
+<div id="appView" hidden>
+  <header class="top">
+    <div class="brand"><svg viewBox="0 0 100 100" aria-hidden="true" style="width:36px;height:36px"><use href="#leafPath"/></svg><span><b style="font-size:1.15rem">Orders</b><small>Shah Apiaries</small></span></div>
+    <div class="grow"></div>
+    <span class="who" id="who"></span>
+    <button class="btn btn-ghost btn-sm" id="refreshBtn" aria-label="Refresh">Refresh</button>
+    <button class="btn btn-ghost btn-sm" id="logoutBtn">Log out</button>
+  </header>
+  <main class="wrap">
+    <div class="stats" id="stats"></div>
+    <div class="tabs" id="tabs" role="group" aria-label="Filter orders"></div>
+    <form class="tools" id="searchForm"><label for="q" style="position:absolute;left:-9999px">Search</label><input id="q" type="search" placeholder="Search name, mobile, city or order number"><button class="btn btn-ghost" type="submit">Search</button></form>
+    <div class="layout">
+      <div>
+        <div class="list" id="list"></div>
+        <div style="text-align:center;margin-top:12px"><button class="btn btn-ghost" id="moreBtn" hidden>Load more</button></div>
+      </div>
+      <div class="detail-pane" id="detailPane" hidden><div class="detail" id="detail"></div></div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const LEAF = "M50 3 L52.5 8 L54.5 13 L57.5 13.5 L56.5 18 L58.5 24 L61.5 24.5 L60 29 L60.5 35 L59 41 L58 45 L62 40 L66.5 35.5 L70.5 31 L71 27 L74.5 28 L79.5 23.5 L82.5 19 L84.5 21 L89.5 16.5 L94 14 L91.5 19 L88.5 24 L86.5 25 L87.5 28 L83.5 31 L79.5 35.5 L81.5 38 L77 40 L73 45.5 L70 50.5 L75 49.5 L80.5 48.5 L83.5 45.5 L85.5 48.5 L91.5 50.5 L98 54.5 L92.5 57.5 L87 59.5 L88 63 L83 63.5 L76.5 64.5 L71 66.5 L65 70.5 L58.5 71 L53 68.5 L51.2 69 L51.6 88 L50 91 L48.4 88 L48.8 69 L47 68.5 L41.5 71 L35 70.5 L29 66.5 L23.5 64.5 L17 63.5 L12 63 L13 59.5 L7.5 57.5 L2 54.5 L8.5 50.5 L14.5 48.5 L16.5 45.5 L19.5 48.5 L25 49.5 L30 50.5 L27 45.5 L23 40 L18.5 38 L20.5 35.5 L16.5 31 L12.5 28 L13.5 25 L11.5 24 L8.5 19 L6 14 L10.5 16.5 L15.5 21 L17.5 19 L20.5 23.5 L25.5 28 L29 27 L29.5 31 L33.5 35.5 L38 40 L42 45 L41 41 L39.5 35 L40 29 L38.5 24.5 L41.5 24 L43.5 18 L42.5 13.5 L45.5 13 L47.5 8 L50 3Z";
+const COMB = "M33 64 41 68.6v9.2L33 82.4 25 77.8v-9.2zM50 64 58 68.6v9.2L50 82.4 42 77.8v-9.2zM67 64 75 68.6v9.2L67 82.4 59 77.8v-9.2zM41.5 49.5 49.5 54.1v9.2L41.5 67.9 33.5 63.3v-9.2zM58.5 49.5 66.5 54.1v9.2L58.5 67.9 50.5 63.3v-9.2zM50 35 58 39.6v9.2L50 53.4 42 48.8v-9.2z";
+document.getElementById("leafPath").setAttribute("d", LEAF);
+document.getElementById("combPath").setAttribute("d", COMB);
+document.querySelector(".top svg").innerHTML = `<path d="${LEAF}" fill="#FBE5A0"/><path d="${COMB}" fill="#F2C230" stroke="#fff" stroke-width="2"/>`;
+
+const SITE = location.origin;
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const rs = paise => "₹" + (paise / 100).toLocaleString("en-IN", { minimumFractionDigits: paise % 100 ? 2 : 0, maximumFractionDigits: 2 });
+const when = ms => new Date(ms).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+function ago(ms){ const m = Math.round((Date.now()-ms)/60000); if (m<1) return "just now"; if (m<60) return m+" min ago"; const h=Math.round(m/60); if (h<24) return h+" h ago"; const d=Math.round(h/24); return d+" day"+(d>1?"s":"")+" ago"; }
+
+let S = { tab:"open", q:"", page:0, orders:[], more:false, sel:null, labels:{}, plabels:{}, counts:{}, user:"", confirmCancel:false, shipForm:false };
+const TABS = [["open","Needs action"],["pending_payment","Awaiting payment"],["shipped","Shipped"],["delivered","Delivered"],["cancelled","Cancelled"],["","All"]];
+const NEXT = { placed:["confirmed","Confirm order"], confirmed:["packed","Mark packed"], packed:["shipped","Mark shipped"], shipped:["delivered","Mark delivered"] };
+
+let toastT;
+function toast(m){ const t=$("#toast"); t.textContent=m; t.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),2400); }
+
+async function api(path, opts={}){
+  const res = await fetch(path, { ...opts, headers: { "content-type":"application/json", ...(opts.headers||{}) } });
+  let data = {}; try { data = await res.json(); } catch {}
+  if (res.status === 401 && !path.endsWith("/login")) { showLogin(); throw new Error(data.error || "Please log in again."); }
+  if (!res.ok) throw new Error(data.error || "Something went wrong.");
+  return data;
+}
+
+function showLogin(){ $("#appView").hidden = true; $("#loginView").hidden = false; setTimeout(()=>$("#lu").focus(), 30); }
+async function showApp(user){ S.user = user; $("#who").textContent = user; $("#loginView").hidden = true; $("#appView").hidden = false; await refresh(); }
+
+$("#loginForm").addEventListener("submit", async e => {
+  e.preventDefault(); const err = $("#loginErr"); err.hidden = true;
+  const btn = e.target.querySelector("button"); btn.disabled = true;
+  try { const d = await api("/api/admin/login", { method:"POST", body: JSON.stringify({ username:$("#lu").value, password:$("#lp").value }) }); $("#lp").value=""; await showApp(d.user); }
+  catch (ex) { err.textContent = ex.message; err.hidden = false; }
+  finally { btn.disabled = false; }
+});
+$("#logoutBtn").addEventListener("click", async () => { await api("/api/admin/logout", { method:"POST", body:"{}" }).catch(()=>{}); S.sel=null; showLogin(); });
+$("#refreshBtn").addEventListener("click", () => refresh().then(()=>toast("Updated")));
+$("#searchForm").addEventListener("submit", e => { e.preventDefault(); S.q = $("#q").value.trim(); S.page = 0; loadList(); });
+$("#moreBtn").addEventListener("click", () => { S.page++; loadList(true); });
+
+async function refresh(){ await Promise.all([loadSummary(), loadList()]); if (S.sel) await openOrder(S.sel, true); }
+
+async function loadSummary(){
+  const d = await api("/api/admin/summary");
+  S.labels = d.statusLabels; S.plabels = d.paymentLabels; S.counts = d.counts;
+  const open = (d.counts.placed||0)+(d.counts.confirmed||0)+(d.counts.packed||0);
+  $("#stats").innerHTML = `
+    <div class="stat attn"><span>Needs action</span><b>${open}</b></div>
+    <div class="stat"><span>Awaiting payment</span><b>${d.counts.pending_payment||0}</b></div>
+    <div class="stat"><span>Today</span><b>${rs(d.today.revenue)}</b> <small class="muted">${d.today.orders} orders</small></div>
+    <div class="stat"><span>Last 7 days</span><b>${rs(d.week.revenue)}</b> <small class="muted">${d.week.orders} orders</small></div>`;
+  const count = k => k==="open" ? open : k==="" ? Object.values(d.counts).reduce((a,b)=>a+b,0) : (d.counts[k]||0);
+  $("#tabs").innerHTML = TABS.map(([k,l]) => `<button class="tab" data-tab="${k}" aria-pressed="${S.tab===k}">${l} <i>${count(k)}</i></button>`).join("");
+}
+$("#tabs").addEventListener("click", e => { const b = e.target.closest("[data-tab]"); if (!b) return; S.tab = b.dataset.tab; S.page = 0; loadSummary(); loadList(); });
+
+async function loadList(append){
+  const p = new URLSearchParams({ status:S.tab, q:S.q, page:S.page });
+  const d = await api("/api/admin/orders?"+p);
+  S.orders = append ? [...S.orders, ...d.orders] : d.orders; S.more = d.more;
+  renderList();
+}
+function renderList(){
+  $("#list").innerHTML = S.orders.length ? S.orders.map(o => `
+    <button class="row" data-open="${o.id}" aria-current="${S.sel===o.id}">
+      <span><span class="nm">${esc(o.name)}</span> <span class="muted">· ${esc(o.city)}</span><br><span class="id">${o.id}</span></span>
+      <span class="amt">${rs(o.total)}<br><small class="muted" style="font-weight:400">${o.items} item${o.items>1?"s":""}</small></span>
+      <span class="meta"><span class="pill s-${o.status}">${esc(S.labels[o.status]||o.status)}</span><span class="pill p-${o.payment_status}">${esc(S.plabels[o.payment_status]||o.payment_status)}</span><span>${ago(o.created_at)}</span></span>
+    </button>`).join("") : `<div class="empty">${S.q ? "No orders match that search." : S.tab==="open" ? "All caught up. New orders appear here." : "No orders here yet."}</div>`;
+  $("#moreBtn").hidden = !S.more;
+}
+$("#list").addEventListener("click", e => { const b = e.target.closest("[data-open]"); if (b) openOrder(b.dataset.open); });
+
+async function openOrder(id, keepForms){
+  S.sel = id; if (!keepForms) { S.confirmCancel = false; S.shipForm = false; }
+  renderList();
+  const d = await api("/api/admin/orders/"+encodeURIComponent(id));
+  renderDetail(d); $("#detailPane").hidden = false;
+}
+
+function waText(o){
+  const first = o.name.split(" ")[0];
+  const track = `${SITE}/#track-${o.id}`;
+  const t = {
+    placed: `Hi ${first}, thank you for ordering from Shah Apiaries. Your order ${o.id} (${rs(o.total)}) is received.`,
+    confirmed: `Hi ${first}, your Shah Apiaries order ${o.id} is confirmed. We'll pack it soon.`,
+    packed: `Hi ${first}, your Shah Apiaries order ${o.id} is packed and ready to ship.`,
+    shipped: `Hi ${first}, your Shah Apiaries order ${o.id} has shipped${o.courier?` via ${o.courier}`:""}.${o.awb?` Tracking number: ${o.awb}.`:""}${o.tracking_url?` Track here: ${o.tracking_url}`:""}`,
+    delivered: `Hi ${first}, your Shah Apiaries order ${o.id} is delivered. We hope you enjoy the honey!`,
+    cancelled: `Hi ${first}, your Shah Apiaries order ${o.id} has been cancelled. Message us if you have any questions.`,
+    pending_payment: `Hi ${first}, your Shah Apiaries order ${o.id} (${rs(o.total)}) is waiting for payment.`
+  }[o.status] || "";
+  const pay = o.payment_status === "awaiting_link" ? ` We'll send a payment link for ${rs(o.total)} shortly.` : "";
+  return `${t}${pay}\n\nTrack your order: ${track}`;
+}
+
+function renderDetail({ order:o, items, events }){
+  const next = NEXT[o.status];
+  const canPay = !["paid","refunded"].includes(o.payment_status) && o.status !== "cancelled";
+  const addr = `${o.name}\n${o.address}\n${o.city} ${o.pin}\nMobile: ${o.phone}`;
+  $("#detail").innerHTML = `
+  <div class="dh">
+    <div class="line1"><button class="btn btn-ghost btn-sm back" data-act="close">← Orders</button><span class="mono muted">${o.id}</span></div>
+    <h2 style="font-size:1.6rem">${esc(o.name)}</h2>
+    <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="pill s-${o.status}">${esc(S.labels[o.status])}</span><span class="pill p-${o.payment_status}">${esc(S.plabels[o.payment_status])}</span><span class="muted" style="font-size:.82rem">${when(o.created_at)}</span></div>
+  </div>
+  <div class="sec">
+    <div class="actions">
+      ${next ? `<button class="btn btn-honey" data-act="next" data-to="${next[0]}">${next[1]}</button>` : ""}
+      ${canPay ? `<button class="btn btn-ghost" data-act="paid">Mark paid</button>` : ""}
+      <a class="btn btn-ghost" target="_blank" rel="noopener" href="https://wa.me/91${o.phone}?text=${encodeURIComponent(waText(o))}">WhatsApp update</a>
+      ${!["cancelled","delivered"].includes(o.status) ? `<button class="btn btn-danger" data-act="askcancel">Cancel order</button>` : ""}
+    </div>
+    ${S.confirmCancel ? `<div class="confirm"><b>Cancel ${o.id}?</b><span style="font-size:.88rem">${o.payment_status==="paid" ? "This order is paid. Refund it from the Razorpay dashboard after cancelling." : "The customer will see it as cancelled."}</span><div class="actions"><button class="btn btn-dark btn-sm" data-act="cancel">Yes, cancel</button><button class="btn btn-ghost btn-sm" data-act="nocancel">Keep order</button></div></div>` : ""}
+    ${S.shipForm || o.status === "shipped" || o.status === "packed" ? shipForm(o) : ""}
+  </div>
+  <div class="sec">
+    <h3>Customer</h3>
+    <dl class="kv">
+      <dt>Mobile</dt><dd><a href="tel:+91${o.phone}" class="mono">${o.phone}</a> <button class="btn btn-ghost btn-sm" data-copy="${esc(o.phone)}">Copy</button></dd>
+      ${o.email ? `<dt>Email</dt><dd>${esc(o.email)}</dd>` : ""}
+      <dt>Address</dt><dd>${esc(o.address)}<br>${esc(o.city)} <span class="mono">${esc(o.pin)}</span><br><button class="btn btn-ghost btn-sm" data-copy="${esc(addr)}" style="margin-top:6px">Copy full address</button></dd>
+      ${o.gift_note ? `<dt>Gift note</dt><dd>“${esc(o.gift_note)}”</dd>` : ""}
+      <dt>Payment</dt><dd>${{online:"Online (Razorpay)",link:"Payment link on WhatsApp",cod:"Cash on delivery"}[o.payment_method]}${o.razorpay_payment_id?` <span class="mono muted">${esc(o.razorpay_payment_id)}</span>`:""}</dd>
+    </dl>
+  </div>
+  <div class="sec items">
+    <h3>Items</h3>
+    ${items.map(i => `<div class="it"><span>${esc(i.name)} · ${esc(i.variant_label)}${i.subscription?" · monthly":""} × ${i.qty}</span><b class="mono">${rs(i.line_total)}</b></div>`).join("")}
+    <div class="sum"><span>Subtotal</span><span>${rs(o.subtotal)}</span></div>
+    ${o.discount ? `<div class="sum" style="color:var(--ok)"><span>${esc(o.discount_label||"Discount")}</span><span>−${rs(o.discount)}</span></div>` : ""}
+    <div class="sum"><span>Shipping</span><span>${o.shipping ? rs(o.shipping) : "Free"}</span></div>
+    ${o.cod_fee ? `<div class="sum"><span>COD fee</span><span>${rs(o.cod_fee)}</span></div>` : ""}
+    <div class="sum total"><span>Total${o.payment_method==="cod"?" to collect":""}</span><span>${rs(o.total)}</span></div>
+  </div>
+  <div class="sec">
+    <h3>Notes &amp; history</h3>
+    <form id="noteForm" style="display:grid;gap:8px">
+      <label for="noteIn" style="margin:0">Add a note</label>
+      <textarea id="noteIn" rows="2" placeholder="Called customer, will deliver Saturday"></textarea>
+      <label style="display:flex;gap:8px;align-items:center;font-weight:400;margin:0"><input type="checkbox" id="notePub" style="width:auto"> Show this note to the customer</label>
+      <button class="btn btn-ghost btn-sm" type="submit" style="justify-self:start">Save note</button>
+    </form>
+    <ul class="timeline">${[...events].reverse().map(ev => `<li class="${ev.public?"":"priv"}"><span><b>${esc(S.labels[ev.status]||ev.status||"Note")}</b>${ev.note?` · ${esc(ev.note)}`:""}<small>${when(ev.at)} · ${esc(ev.actor||"")}${ev.public?"":" · private"}</small></span></li>`).join("")}</ul>
+  </div>`;
+}
+function shipForm(o){
+  return `<form id="shipForm" style="display:grid;gap:10px;background:var(--sunk);border-radius:12px;padding:12px">
+    <b style="font-size:.9rem">Shipping details</b>
+    <div class="grid2"><div><label for="sCourier">Courier</label><input id="sCourier" value="${esc(o.courier||"")}" placeholder="India Post, Delhivery, DTDC"></div>
+    <div><label for="sAwb">Tracking number</label><input id="sAwb" class="mono" value="${esc(o.awb||"")}"></div></div>
+    <div><label for="sUrl">Tracking link (optional)</label><input id="sUrl" value="${esc(o.tracking_url||"")}" placeholder="https://"></div>
+    <button class="btn btn-dark btn-sm" type="submit" style="justify-self:start">${o.status==="packed" ? "Save and mark shipped" : "Save shipping details"}</button>
+  </form>`;
+}
+
+async function update(body, msg){
+  try { const d = await api("/api/admin/orders/"+encodeURIComponent(S.sel), { method:"POST", body: JSON.stringify(body) }); S.confirmCancel=false; S.shipForm=false; renderDetail(d); toast(msg); loadSummary(); loadList(); }
+  catch (ex) { toast(ex.message); }
+}
+$("#detail").addEventListener("click", async e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.copy !== undefined) { try { await navigator.clipboard.writeText(b.dataset.copy); toast("Copied"); } catch { toast("Copy not allowed here"); } return; }
+  const act = b.dataset.act; if (!act) return;
+  if (act === "close") { $("#detailPane").hidden = true; S.sel = null; renderList(); return; }
+  if (act === "next") { if (b.dataset.to === "shipped") { S.shipForm = true; await openOrder(S.sel, true); setTimeout(()=>$("#sCourier")?.focus(),30); return; } return update({ status: b.dataset.to }, S.labels[b.dataset.to]); }
+  if (act === "paid") return update({ markPaid: true }, "Marked as paid");
+  if (act === "askcancel") { S.confirmCancel = true; return openOrder(S.sel, true); }
+  if (act === "nocancel") { S.confirmCancel = false; return openOrder(S.sel, true); }
+  if (act === "cancel") return update({ status: "cancelled" }, "Order cancelled");
+});
+$("#detail").addEventListener("submit", e => {
+  e.preventDefault();
+  if (e.target.id === "noteForm") { const v = $("#noteIn").value.trim(); if (!v) return toast("Write a note first"); return update({ note: v, notePublic: $("#notePub").checked }, "Note saved"); }
+  if (e.target.id === "shipForm") {
+    const cur = S.orders.find(o => o.id === S.sel)?.status;
+    const body = { courier: $("#sCourier").value, awb: $("#sAwb").value, tracking_url: $("#sUrl").value };
+    if (cur === "packed" || S.shipForm) body.status = "shipped";
+    if (body.status === "shipped" && !body.awb.trim()) return toast("Add the tracking number");
+    return update(body, body.status === "shipped" ? "Marked shipped" : "Shipping details saved");
+  }
+});
+
+setInterval(() => { if (!$("#appView").hidden && !document.hidden) { loadSummary().catch(()=>{}); loadList().catch(()=>{}); } }, 60000);
+
+api("/api/admin/me").then(d => showApp(d.user)).catch(() => showLogin());
+</script>
+</body>
+</html>

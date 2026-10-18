@@ -1,0 +1,16 @@
+{
+  "name": "shah-apiaries",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shah Apiaries shop: storefront, order API with Razorpay, admin dashboard. Runs on Cloudflare Workers + D1.",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler d1 migrations apply shah-apiaries --local && wrangler dev",
+    "deploy": "wrangler d1 migrations apply shah-apiaries --remote && wrangler deploy",
+    "hash-password": "node scripts/hash-password.mjs",
+    "test": "node --experimental-sqlite --no-warnings test/run.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
