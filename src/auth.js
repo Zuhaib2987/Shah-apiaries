@@ -7,7 +7,11 @@ const MAX_FAILS = 8;            // per IP...
 const FAIL_WINDOW_MS = 15 * 60 * 1000; // ...per 15 minutes
 
 function adminUsers(env) {
-  try { return JSON.parse(env.ADMIN_USERS || "{}"); } catch { console.error("ADMIN_USERS is not valid JSON"); return {}; }
+  try {
+    const raw = String(env.ADMIN_USERS || "{}").trim().replace(/[\u201C\u201D]/g, '"'); // undo phone "smart quotes"
+    const users = JSON.parse(raw);
+    return users && typeof users === "object" ? users : {};
+  } catch { console.error("ADMIN_USERS is not valid JSON"); return {}; }
 }
 
 function sessionSecret(env) {
@@ -42,12 +46,16 @@ export async function requireAdmin(request, env) {
 }
 
 export async function login(request, env, { username, password }) {
+  sessionSecret(env); // fails clearly if SESSION_SECRET is missing
+  if (!Object.keys(adminUsers(env)).length)
+    throw new HttpError(503, "Admin login isn't set up yet: the ADMIN_USERS secret is missing or not pasted correctly.");
   const ip = clientIp(request);
   const since = Date.now() - FAIL_WINDOW_MS;
   const { n } = await env.DB.prepare("SELECT COUNT(*) AS n FROM login_failures WHERE ip = ? AND at > ?").bind(ip, since).first();
   if (n >= MAX_FAILS) throw new HttpError(429, "Too many wrong attempts. Wait 15 minutes and try again.");
 
   const user = String(username || "").trim().toLowerCase();
+  if (!adminUsers(env)[user]) console.log("Login: unknown username", user);
   const stored = adminUsers(env)[user];
   const ok = stored ? await verifyPassword(password, stored) : false;
   if (!ok) {
