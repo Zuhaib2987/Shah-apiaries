@@ -126,6 +126,16 @@ await test("unpaid online order cannot be packed until marked paid", async () =>
   assert.equal(paid.order.payment_status, "paid"); assert.equal(paid.order.status, "placed");
 });
 
+await test("only cancelled orders can be deleted", async () => {
+  const o = await (await post("/api/orders", { customer: customer("9555555555"), items: [{ pid: "acacia", vid: "500", qty: 1 }], payment: "cod" })).json();
+  const del = () => fetch(`${t.url}/api/admin/orders/${o.order.id}`, { method: "DELETE", headers: { cookie: adminCookie } });
+  assert.equal((await del()).status, 409);
+  await post(`/api/admin/orders/${o.order.id}`, { status: "cancelled" }, { cookie: adminCookie });
+  assert.equal((await del()).status, 200);
+  assert.equal((await fetch(`${t.url}/api/admin/orders/${o.order.id}`, { headers: { cookie: adminCookie } })).status, 404);
+  assert.equal((await fetch(`${t.url}/api/admin/orders/${o.order.id}`, { method: "DELETE" })).status, 401);
+});
+
 await test("logged-out cookie is rejected", async () => {
   const r = await post("/api/admin/logout", {}, { cookie: adminCookie });
   assert.match(r.headers.get("set-cookie"), /Max-Age=0/);

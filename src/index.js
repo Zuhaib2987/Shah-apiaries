@@ -2,7 +2,7 @@
 import { HttpError, json, readJson, checkSameOrigin } from "./http.js";
 import { catalogResponse, createOrder, verifyPayment, handleWebhook, trackOrder } from "./orders.js";
 import { getAdmin, requireAdmin, login, logoutCookie } from "./auth.js";
-import { summary, listOrders, getOrder, updateOrder } from "./admin.js";
+import { summary, listOrders, getOrder, updateOrder, deleteOrder } from "./admin.js";
 
 async function api(request, env, url) {
   const { pathname } = url;
@@ -46,6 +46,7 @@ async function api(request, env, url) {
     m = pathname.match(/^\/api\/admin\/orders\/(SA-[0-9A-Z-]{6,20})$/i);
     if (m && method === "GET") return json(await getOrder(env, m[1].toUpperCase()));
     if (m && method === "POST") return json(await updateOrder(env, m[1].toUpperCase(), await readJson(request), admin));
+    if (m && method === "DELETE") return json(await deleteOrder(env, m[1].toUpperCase()));
   }
   throw new HttpError(404, "Not found.");
 }

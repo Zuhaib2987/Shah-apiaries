@@ -86,3 +86,15 @@ export async function updateOrder(env, id, body, admin) {
   await env.DB.batch(stmts);
   return getOrder(env, id);
 }
+
+export async function deleteOrder(env, id) {
+  const order = await env.DB.prepare("SELECT status FROM orders WHERE id = ?").bind(id).first();
+  if (!order) throw new HttpError(404, "Order not found.");
+  if (order.status !== "cancelled") throw new HttpError(409, "Cancel the order first, then delete it.");
+  await env.DB.batch([
+    env.DB.prepare("DELETE FROM order_events WHERE order_id = ?").bind(id),
+    env.DB.prepare("DELETE FROM order_items WHERE order_id = ?").bind(id),
+    env.DB.prepare("DELETE FROM orders WHERE id = ?").bind(id)
+  ]);
+  return { deleted: id };
+}

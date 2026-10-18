@@ -178,7 +178,7 @@ const rs = paise => "₹" + (paise / 100).toLocaleString("en-IN", { minimumFract
 const when = ms => new Date(ms).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 function ago(ms){ const m = Math.round((Date.now()-ms)/60000); if (m<1) return "just now"; if (m<60) return m+" min ago"; const h=Math.round(m/60); if (h<24) return h+" h ago"; const d=Math.round(h/24); return d+" day"+(d>1?"s":"")+" ago"; }
 
-let S = { tab:"open", q:"", page:0, orders:[], more:false, sel:null, labels:{}, plabels:{}, counts:{}, user:"", confirmCancel:false, shipForm:false };
+let S = { tab:"open", q:"", page:0, orders:[], more:false, sel:null, labels:{}, plabels:{}, counts:{}, user:"", confirmCancel:false, confirmDelete:false, shipForm:false };
 const TABS = [["open","Needs action"],["pending_payment","Awaiting payment"],["shipped","Shipped"],["delivered","Delivered"],["cancelled","Cancelled"],["","All"]];
 const NEXT = { placed:["confirmed","Confirm order"], confirmed:["packed","Mark packed"], packed:["shipped","Mark shipped"], shipped:["delivered","Mark delivered"] };
 
@@ -242,7 +242,7 @@ function renderList(){
 $("#list").addEventListener("click", e => { const b = e.target.closest("[data-open]"); if (b) openOrder(b.dataset.open); });
 
 async function openOrder(id, keepForms){
-  S.sel = id; if (!keepForms) { S.confirmCancel = false; S.shipForm = false; }
+  S.sel = id; if (!keepForms) { S.confirmCancel = false; S.confirmDelete = false; S.shipForm = false; }
   renderList();
   const d = await api("/api/admin/orders/"+encodeURIComponent(id));
   renderDetail(d); $("#detailPane").hidden = false;
@@ -280,7 +280,9 @@ function renderDetail({ order:o, items, events }){
       ${canPay ? `<button class="btn btn-ghost" data-act="paid">Mark paid</button>` : ""}
       <a class="btn btn-ghost" target="_blank" rel="noopener" href="https://wa.me/91${o.phone}?text=${encodeURIComponent(waText(o))}">WhatsApp update</a>
       ${!["cancelled","delivered"].includes(o.status) ? `<button class="btn btn-danger" data-act="askcancel">Cancel order</button>` : ""}
+      ${o.status === "cancelled" ? `<button class="btn btn-danger" data-act="askdelete">Delete order</button>` : ""}
     </div>
+    ${S.confirmDelete ? `<div class="confirm"><b>Delete ${o.id} forever?</b><span style="font-size:.88rem">The order, its items and its history are removed. This can't be undone.</span><div class="actions"><button class="btn btn-dark btn-sm" data-act="delete">Yes, delete</button><button class="btn btn-ghost btn-sm" data-act="nodelete">Keep it</button></div></div>` : ""}
     ${S.confirmCancel ? `<div class="confirm"><b>Cancel ${o.id}?</b><span style="font-size:.88rem">${o.payment_status==="paid" ? "This order is paid. Refund it from the Razorpay dashboard after cancelling." : "The customer will see it as cancelled."}</span><div class="actions"><button class="btn btn-dark btn-sm" data-act="cancel">Yes, cancel</button><button class="btn btn-ghost btn-sm" data-act="nocancel">Keep order</button></div></div>` : ""}
     ${S.shipForm || o.status === "shipped" || o.status === "packed" ? shipForm(o) : ""}
   </div>
@@ -338,6 +340,13 @@ $("#detail").addEventListener("click", async e => {
   if (act === "askcancel") { S.confirmCancel = true; return openOrder(S.sel, true); }
   if (act === "nocancel") { S.confirmCancel = false; return openOrder(S.sel, true); }
   if (act === "cancel") return update({ status: "cancelled" }, "Order cancelled");
+  if (act === "askdelete") { S.confirmDelete = true; return openOrder(S.sel, true); }
+  if (act === "nodelete") { S.confirmDelete = false; return openOrder(S.sel, true); }
+  if (act === "delete") {
+    try { await api("/api/admin/orders/"+encodeURIComponent(S.sel), { method:"DELETE" }); toast("Order deleted"); S.confirmDelete=false; S.sel=null; $("#detailPane").hidden=true; loadSummary(); loadList(); }
+    catch (ex) { toast(ex.message); }
+    return;
+  }
 });
 $("#detail").addEventListener("submit", e => {
   e.preventDefault();
