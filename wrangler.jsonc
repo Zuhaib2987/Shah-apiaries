@@ -14,8 +14,7 @@
     {
       "binding": "DB",
       "database_name": "shah-apiaries",
-      // Paste the ID shown after creating the database (see README, step 3).
-      "database_id": "PASTE_D1_DATABASE_ID_HERE",
+      "database_id": "aac9cb55-bb5c-4dd0-b76c-9e787de2b26c",
       "migrations_dir": "migrations"
     }
   ],

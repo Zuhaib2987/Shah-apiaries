@@ -39,8 +39,8 @@ Runs entirely on **Cloudflare** (free plan): the shop, the API and the database.
 ### 2. Database
 1. Cloudflare dashboard → **Storage & Databases → D1** → **Create database** → name it `shah-apiaries`.
 2. Copy the **Database ID**.
-3. In this repo, edit `wrangler.jsonc` and replace `PASTE_D1_DATABASE_ID_HERE` with it. Commit.
-4. Open the database → **Console**, paste the whole of `migrations/0001_init.sql`, and run it. (This creates the tables. The deploy command also applies migrations; running it here once is the safe fallback.)
+3. The ID goes in `wrangler.jsonc` (already done: `aac9cb55-…`).
+4. Open the database → **Console**, paste the whole of `migrations/0001_init.sql`, and run it. This creates the tables. Future table changes are added the same way.
 
 ### 3. Admin passwords
 On a computer with Node.js installed, in this folder:

@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler d1 migrations apply shah-apiaries --local && wrangler dev",
-    "deploy": "wrangler d1 migrations apply shah-apiaries --remote && wrangler deploy",
+    "deploy": "wrangler deploy",
+    "db:migrate": "wrangler d1 migrations apply shah-apiaries --remote",
     "hash-password": "node scripts/hash-password.mjs",
     "test": "node --experimental-sqlite --no-warnings test/run.mjs"
   },

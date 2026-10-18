@@ -1,5 +1,5 @@
 -- Orders placed on the website
-CREATE TABLE orders (
+CREATE TABLE IF NOT EXISTS orders (
   id                  TEXT PRIMARY KEY,          -- e.g. SA-261018-7K3QX
   created_at          INTEGER NOT NULL,          -- unix ms
   updated_at          INTEGER NOT NULL,
@@ -28,12 +28,12 @@ CREATE TABLE orders (
   tracking_url        TEXT,
   admin_note          TEXT
 );
-CREATE INDEX idx_orders_created ON orders(created_at DESC);
-CREATE INDEX idx_orders_status  ON orders(status);
-CREATE INDEX idx_orders_phone   ON orders(phone);
-CREATE UNIQUE INDEX idx_orders_rzp ON orders(razorpay_order_id) WHERE razorpay_order_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_orders_created ON orders(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_orders_status  ON orders(status);
+CREATE INDEX IF NOT EXISTS idx_orders_phone   ON orders(phone);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_rzp ON orders(razorpay_order_id) WHERE razorpay_order_id IS NOT NULL;
 
-CREATE TABLE order_items (
+CREATE TABLE IF NOT EXISTS order_items (
   id            INTEGER PRIMARY KEY AUTOINCREMENT,
   order_id      TEXT NOT NULL REFERENCES orders(id),
   product_id    TEXT NOT NULL,
@@ -45,10 +45,10 @@ CREATE TABLE order_items (
   subscription  INTEGER NOT NULL DEFAULT 0,
   line_total    INTEGER NOT NULL
 );
-CREATE INDEX idx_items_order ON order_items(order_id);
+CREATE INDEX IF NOT EXISTS idx_items_order ON order_items(order_id);
 
 -- Status history shown to the customer and in the dashboard
-CREATE TABLE order_events (
+CREATE TABLE IF NOT EXISTS order_events (
   id        INTEGER PRIMARY KEY AUTOINCREMENT,
   order_id  TEXT NOT NULL REFERENCES orders(id),
   at        INTEGER NOT NULL,
@@ -57,11 +57,11 @@ CREATE TABLE order_events (
   actor     TEXT,                 -- customer | razorpay | system | admin username
   public    INTEGER NOT NULL DEFAULT 1
 );
-CREATE INDEX idx_events_order ON order_events(order_id, at);
+CREATE INDEX IF NOT EXISTS idx_events_order ON order_events(order_id, at);
 
 -- Failed admin logins, for rate limiting
-CREATE TABLE login_failures (
+CREATE TABLE IF NOT EXISTS login_failures (
   ip TEXT NOT NULL,
   at INTEGER NOT NULL
 );
-CREATE INDEX idx_login_fail ON login_failures(ip, at);
+CREATE INDEX IF NOT EXISTS idx_login_fail ON login_failures(ip, at);
