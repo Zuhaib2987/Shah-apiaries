@@ -4,8 +4,22 @@ import { catalogResponse, createOrder, verifyPayment, handleWebhook, trackOrder 
 import { getAdmin, requireAdmin, login, logoutCookie } from "./auth.js";
 import { summary, listOrders, getOrder, updateOrder, deleteOrder } from "./admin.js";
 
+// Adds columns introduced after the first launch to an existing database, once per Worker instance.
+let schemaReady = null;
+function ensureSchema(env) {
+  schemaReady ||= (async () => {
+    try { await env.DB.prepare("SELECT advance FROM orders LIMIT 1").all(); }
+    catch {
+      try { await env.DB.prepare("ALTER TABLE orders ADD COLUMN advance INTEGER NOT NULL DEFAULT 0").run(); }
+      catch (e) { if (!/duplicate column/i.test(String(e?.message))) throw e; } // another instance got there first
+    }
+  })().catch(err => { schemaReady = null; throw err; });
+  return schemaReady;
+}
+
 async function api(request, env, url) {
   const { pathname } = url;
+  if (pathname !== "/api/catalog") await ensureSchema(env);
   const method = request.method;
   if (method !== "GET" && method !== "HEAD" && pathname !== "/api/webhooks/razorpay") checkSameOrigin(request, url);
 

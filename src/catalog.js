@@ -10,6 +10,8 @@ export const PRICING = {
   freeShippingAbove: 999, // ₹, after discounts
   shippingFee: 80,        // ₹ below the free-shipping threshold
   codFee: 40,             // ₹ extra for cash on delivery
+  codAdvancePct: 50,      // COD: % of the total paid online in advance, rest in cash on delivery
+  codAdvancePctJK: 20,    // ...lower advance for Jammu & Kashmir PIN codes (180xxx to 193xxx)
   couponCode: "WELCOME10",
   couponPct: 10,          // first order only (checked by mobile number)
   bulkMinItems: 3,        // buy this many items or more...
@@ -55,3 +57,6 @@ export function findVariant(pid, vid) {
   const variant = product?.variants.find(v => v.id === vid);
   return product && variant ? { product, variant } : null;
 }
+
+// Jammu & Kashmir PIN codes start 180 to 193 (194 is Ladakh).
+export const isJK = pin => { const p3 = Number(String(pin || "").slice(0, 3)); return p3 >= 180 && p3 <= 193; };

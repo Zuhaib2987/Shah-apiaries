@@ -1,5 +1,5 @@
 import { HttpError } from "./http.js";
-import { STATUSES, STATUS_LABEL, PAYMENT_LABEL } from "./orders.js";
+import { STATUSES, STATUS_LABEL, PAYMENT_LABEL, advanceNote } from "./orders.js";
 
 const clean = (v, max) => String(v ?? "").trim().slice(0, max);
 
@@ -52,8 +52,10 @@ export async function updateOrder(env, id, body, admin) {
 
   if (body.status !== undefined) {
     if (!STATUSES.includes(body.status) || body.status === "pending_payment") throw new HttpError(400, "Unknown status.");
-    if (order.status === "pending_payment" && body.status !== "cancelled" && order.payment_status !== "paid")
-      throw new HttpError(409, "This order has not been paid yet. Mark it paid first, or cancel it.");
+    if (order.status === "pending_payment" && body.status !== "cancelled" && !["paid", "advance_paid"].includes(order.payment_status))
+      throw new HttpError(409, order.payment_status === "advance_pending"
+        ? "The COD advance has not been paid yet. Mark the advance paid first, or cancel it."
+        : "This order has not been paid yet. Mark it paid first, or cancel it.");
     newStatus = body.status;
     sets.push("status = ?"); binds.push(newStatus);
   }
@@ -66,9 +68,15 @@ export async function updateOrder(env, id, body, admin) {
   }
   if (body.markPaid) {
     if (order.payment_status === "paid") throw new HttpError(409, "Already marked as paid.");
-    sets.push("payment_status = 'paid'", "paid_at = ?"); binds.push(now);
+    if (order.payment_status === "advance_pending") {
+      // COD advance received (e.g. by a payment link); the rest is collected on delivery.
+      sets.push("payment_status = 'advance_paid'", "paid_at = ?"); binds.push(now);
+      notes.push({ text: advanceNote(order), pub: 1 });
+    } else {
+      sets.push("payment_status = 'paid'", "paid_at = COALESCE(paid_at, ?)"); binds.push(now);
+      notes.push({ text: order.payment_status === "advance_paid" ? "Balance collected on delivery" : "Payment received", pub: 1 });
+    }
     if (order.status === "pending_payment") { newStatus = "placed"; sets.push("status = 'placed'"); }
-    notes.push({ text: "Payment received", pub: 1 });
   }
   if (!sets.length && !body.note) throw new HttpError(400, "Nothing to update.");
 

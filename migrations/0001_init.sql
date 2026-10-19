@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS orders (
   shipping            INTEGER NOT NULL,
   cod_fee             INTEGER NOT NULL,
   total               INTEGER NOT NULL,
+  advance             INTEGER NOT NULL DEFAULT 0, -- COD: part paid online before dispatch
   razorpay_order_id   TEXT,
   razorpay_payment_id TEXT,
   paid_at             INTEGER,

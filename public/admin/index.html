@@ -89,7 +89,8 @@ label{font-size:.8rem;font-weight:600;display:block;margin-bottom:4px}
 .s-cancelled{background:var(--sunk);color:var(--muted)}
 .p-paid{background:var(--ok-soft);color:var(--ok)}
 .p-cod{background:var(--sunk);color:var(--ink)}
-.p-pending,.p-awaiting_link{background:var(--warn-soft);color:var(--warn)}
+.p-pending,.p-awaiting_link,.p-advance_pending{background:var(--warn-soft);color:var(--warn)}
+.p-advance_paid{background:var(--ok-soft);color:var(--ok)}
 .p-failed{background:var(--bad-soft);color:var(--bad)}
 .p-refunded{background:var(--sunk);color:var(--muted)}
 .empty{border:1.5px dashed var(--line);border-radius:14px;padding:28px;text-align:center;color:var(--muted)}
@@ -258,9 +259,13 @@ function waText(o){
     shipped: `Hi ${first}, your Shah Apiaries order ${o.id} has shipped${o.courier?` via ${o.courier}`:""}.${o.awb?` Tracking number: ${o.awb}.`:""}${o.tracking_url?` Track here: ${o.tracking_url}`:""}`,
     delivered: `Hi ${first}, your Shah Apiaries order ${o.id} is delivered. We hope you enjoy the honey!`,
     cancelled: `Hi ${first}, your Shah Apiaries order ${o.id} has been cancelled. Message us if you have any questions.`,
-    pending_payment: `Hi ${first}, your Shah Apiaries order ${o.id} (${rs(o.total)}) is waiting for payment.`
+    pending_payment: o.payment_status === "advance_pending"
+      ? `Hi ${first}, thank you for ordering from Shah Apiaries. To confirm your cash on delivery order ${o.id}, please pay the advance of ${rs(o.advance)}. The remaining ${rs(o.total - o.advance)} is paid in cash on delivery.`
+      : `Hi ${first}, your Shah Apiaries order ${o.id} (${rs(o.total)}) is waiting for payment.`
   }[o.status] || "";
-  const pay = o.payment_status === "awaiting_link" ? ` We'll send a payment link for ${rs(o.total)} shortly.` : "";
+  const pay = o.payment_status === "awaiting_link" ? ` We'll send a payment link for ${rs(o.total)} shortly.`
+    : o.payment_status === "advance_pending" && o.status !== "pending_payment" ? ` We'll send a payment link for the ${rs(o.advance)} advance shortly.`
+    : o.payment_status === "advance_paid" && ["shipped","packed"].includes(o.status) ? ` Please keep ${rs(o.total - o.advance)} ready in cash for delivery.` : "";
   return `${t}${pay}\n\nTrack your order: ${track}`;
 }
 
@@ -277,7 +282,7 @@ function renderDetail({ order:o, items, events }){
   <div class="sec">
     <div class="actions">
       ${next ? `<button class="btn btn-honey" data-act="next" data-to="${next[0]}">${next[1]}</button>` : ""}
-      ${canPay ? `<button class="btn btn-ghost" data-act="paid">Mark paid</button>` : ""}
+      ${canPay ? `<button class="btn btn-ghost" data-act="paid">${o.payment_status==="advance_pending" ? `Mark advance paid (${rs(o.advance)})` : o.payment_status==="advance_paid" ? `Mark cash collected (${rs(o.total - o.advance)})` : "Mark paid"}</button>` : ""}
       <a class="btn btn-ghost" target="_blank" rel="noopener" href="https://wa.me/91${o.phone}?text=${encodeURIComponent(waText(o))}">WhatsApp update</a>
       ${!["cancelled","delivered"].includes(o.status) ? `<button class="btn btn-danger" data-act="askcancel">Cancel order</button>` : ""}
       ${o.status === "cancelled" ? `<button class="btn btn-danger" data-act="askdelete">Delete order</button>` : ""}
@@ -293,7 +298,7 @@ function renderDetail({ order:o, items, events }){
       ${o.email ? `<dt>Email</dt><dd>${esc(o.email)}</dd>` : ""}
       <dt>Address</dt><dd>${esc(o.address)}<br>${esc(o.city)} <span class="mono">${esc(o.pin)}</span><br><button class="btn btn-ghost btn-sm" data-copy="${esc(addr)}" style="margin-top:6px">Copy full address</button></dd>
       ${o.gift_note ? `<dt>Gift note</dt><dd>“${esc(o.gift_note)}”</dd>` : ""}
-      <dt>Payment</dt><dd>${{online:"Online (Razorpay)",link:"Payment link on WhatsApp",cod:"Cash on delivery"}[o.payment_method]}${o.razorpay_payment_id?` <span class="mono muted">${esc(o.razorpay_payment_id)}</span>`:""}</dd>
+      <dt>Payment</dt><dd>${{online:"Online (Razorpay)",link:"Payment link on WhatsApp",cod:o.advance?"Cash on delivery, part advance":"Cash on delivery"}[o.payment_method]}${o.razorpay_payment_id?` <span class="mono muted">${esc(o.razorpay_payment_id)}</span>`:""}</dd>
     </dl>
   </div>
   <div class="sec items">
@@ -303,7 +308,9 @@ function renderDetail({ order:o, items, events }){
     ${o.discount ? `<div class="sum" style="color:var(--ok)"><span>${esc(o.discount_label||"Discount")}</span><span>−${rs(o.discount)}</span></div>` : ""}
     <div class="sum"><span>Shipping</span><span>${o.shipping ? rs(o.shipping) : "Free"}</span></div>
     ${o.cod_fee ? `<div class="sum"><span>COD fee</span><span>${rs(o.cod_fee)}</span></div>` : ""}
-    <div class="sum total"><span>Total${o.payment_method==="cod"?" to collect":""}</span><span>${rs(o.total)}</span></div>
+    <div class="sum total"><span>Total</span><span>${rs(o.total)}</span></div>
+    ${o.advance ? `<div class="sum" style="color:${["advance_paid","paid"].includes(o.payment_status)?"var(--ok)":"var(--warn)"}"><span>Advance online${["advance_paid","paid"].includes(o.payment_status)?", paid":", not paid yet"}</span><span>${rs(o.advance)}</span></div>
+    <div class="sum total"><span>Cash to collect</span><span>${o.payment_status==="paid" ? "Collected" : rs(o.total - o.advance)}</span></div>` : o.payment_method==="cod" ? `<div class="sum total"><span>Cash to collect</span><span>${o.payment_status==="paid" ? "Collected" : rs(o.total)}</span></div>` : ""}
   </div>
   <div class="sec">
     <h3>Notes &amp; history</h3>
@@ -336,7 +343,7 @@ $("#detail").addEventListener("click", async e => {
   const act = b.dataset.act; if (!act) return;
   if (act === "close") { $("#detailPane").hidden = true; S.sel = null; renderList(); return; }
   if (act === "next") { if (b.dataset.to === "shipped") { S.shipForm = true; await openOrder(S.sel, true); setTimeout(()=>$("#sCourier")?.focus(),30); return; } return update({ status: b.dataset.to }, S.labels[b.dataset.to]); }
-  if (act === "paid") return update({ markPaid: true }, "Marked as paid");
+  if (act === "paid") return update({ markPaid: true }, b.textContent.includes("advance") ? "Advance marked paid" : b.textContent.includes("cash") ? "Cash collected" : "Marked as paid");
   if (act === "askcancel") { S.confirmCancel = true; return openOrder(S.sel, true); }
   if (act === "nocancel") { S.confirmCancel = false; return openOrder(S.sel, true); }
   if (act === "cancel") return update({ status: "cancelled" }, "Order cancelled");

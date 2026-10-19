@@ -20,12 +20,39 @@ await test("catalog lists products and online payments", async () => {
   assert.equal(r.status, 200); assert.equal(j.products.length, 5); assert.equal(j.payments.online, true); assert.equal(j.payments.keyId, "rzp_test_mock");
 });
 
-await test("COD order is placed with correct total", async () => {
+const payAdvance = async j => {
+  const pid = "pay_ADV" + j.order.id.slice(-5);
+  const r = await post("/api/orders/verify", { orderId: j.order.id, razorpay_order_id: j.razorpay.orderId, razorpay_payment_id: pid, razorpay_signature: t.sign(j.razorpay.orderId, pid) });
+  return r.json();
+};
+
+await test("J&K COD order asks for a 20% advance online", async () => {
   const r = await post("/api/orders", { customer: customer(), items: [{ pid: "acacia", vid: "500", qty: 1 }], payment: "cod" });
   const j = await r.json(); assert.equal(r.status, 201, JSON.stringify(j));
-  assert.equal(j.order.status, "placed"); assert.equal(j.order.paymentStatus, "cod");
-  assert.equal(j.order.total, (749 + 80 + 40) * 100); assert.equal(j.razorpay, null);
+  assert.equal(j.order.total, (749 + 80 + 40) * 100);
+  assert.equal(j.order.advance, 17400); assert.equal(j.order.balance, 86900 - 17400); // 20% of 869 = 173.8, rounded up
+  assert.equal(j.order.status, "pending_payment"); assert.equal(j.order.paymentStatus, "advance_pending");
+  assert.equal(j.razorpay.amount, 17400);
   codId = j.order.id; assert.match(codId, /^SA-\d{6}-[A-Z0-9]{5}$/);
+  const paid = await payAdvance(j);
+  assert.equal(paid.order.paymentStatus, "advance_paid"); assert.equal(paid.order.status, "placed");
+  assert.match(paid.order.events.at(-1).note, /₹174 received\. ₹695 to pay on delivery/);
+});
+
+await test("COD outside J&K asks for a 50% advance (Ladakh counts as outside)", async () => {
+  for (const pin of ["110001", "194101"]) {
+    const j = await (await post("/api/orders", { customer: { ...customer("9811111111"), pin }, items: [{ pid: "sulai", vid: "500", qty: 1 }], payment: "cod" })).json();
+    assert.equal(j.order.total, (899 + 80 + 40) * 100);
+    assert.equal(j.order.advance, 51000); assert.equal(j.razorpay.amount, 51000); // 50% of 1019 = 509.5, rounded up
+  }
+});
+
+await test("COD order cannot be confirmed before the advance is paid", async () => {
+  const j = await (await post("/api/orders", { customer: customer("9822222222"), items: [{ pid: "acacia", vid: "500", qty: 1 }], payment: "cod" })).json();
+  const login = await post("/api/admin/login", { username: "zuhaib", password: "honey-admin-1" });
+  const ck = login.headers.get("set-cookie").split(";")[0];
+  const r = await post(`/api/admin/orders/${j.order.id}`, { status: "confirmed" }, { cookie: ck });
+  assert.equal(r.status, 409); assert.match((await r.json()).error, /advance/);
 });
 
 await test("browser cannot change prices", async () => {
@@ -79,6 +106,7 @@ await test("webhook payment.captured marks order paid", async () => {
 await test("first-order coupon works once per mobile number", async () => {
   const first = await (await post("/api/orders", { customer: customer("9555555555"), items: [{ pid: "acacia", vid: "500", qty: 1 }], coupon: "welcome10", payment: "cod" })).json();
   assert.equal(first.order.discount, Math.round(74900 * 0.1));
+  await payAdvance(first); // an order only uses up the coupon once it is paid
   const second = await (await post("/api/orders", { customer: customer("9555555555"), items: [{ pid: "acacia", vid: "500", qty: 1 }], coupon: "WELCOME10", payment: "cod" })).json();
   assert.equal(second.order.discount, 0); assert.equal(second.couponRejected, true);
 });
@@ -86,7 +114,7 @@ await test("first-order coupon works once per mobile number", async () => {
 await test("tracking needs the right mobile number", async () => {
   assert.equal((await fetch(`${t.url}/api/orders/${codId}?phone=9999999999`)).status, 404);
   const j = await (await fetch(`${t.url}/api/orders/${codId}?phone=9876543210`)).json();
-  assert.equal(j.order.id, codId); assert.equal(j.order.events.length, 1);
+  assert.equal(j.order.id, codId); assert.equal(j.order.events.length, 2);
 });
 
 await test("requests from other websites are blocked", async () => {
@@ -160,6 +188,14 @@ await test("without Razorpay keys, online order becomes a payment-link order", a
   const r = await fetch(t2.url + "/api/orders", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ customer: customer(), items: [{ pid: "acacia", vid: "1kg", qty: 1 }], payment: "online" }) });
   const j = await r.json(); assert.equal(r.status, 201);
   assert.equal(j.order.paymentMethod, "link"); assert.equal(j.order.status, "placed"); assert.equal(j.razorpay, null);
+});
+await test("without Razorpay keys, admin marks the COD advance, then the balance", async () => {
+  const j = await (await fetch(t2.url + "/api/orders", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ customer: customer(), items: [{ pid: "acacia", vid: "500", qty: 1 }], payment: "cod" }) })).json();
+  assert.equal(j.razorpay, null); assert.equal(j.order.paymentStatus, "advance_pending"); assert.equal(j.order.advance, 17400);
+  const ck = (await fetch(t2.url + "/api/admin/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ username: "zuhaib", password: "honey-admin-1" }) })).headers.get("set-cookie").split(";")[0];
+  const mark = async () => (await fetch(`${t2.url}/api/admin/orders/${j.order.id}`, { method: "POST", headers: { "content-type": "application/json", cookie: ck }, body: JSON.stringify({ markPaid: true }) })).json();
+  const a = await mark(); assert.equal(a.order.payment_status, "advance_paid"); assert.equal(a.order.status, "placed");
+  const b = await mark(); assert.equal(b.order.payment_status, "paid");
 });
 t2.close();
 

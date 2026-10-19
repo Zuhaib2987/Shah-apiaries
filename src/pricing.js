@@ -1,8 +1,8 @@
-import { PRICING, findVariant } from "./catalog.js";
+import { PRICING, findVariant, isJK } from "./catalog.js";
 import { HttpError } from "./http.js";
 
 // Recalculates an order on the server. All amounts returned are in paise.
-export function priceCart(items, { coupon = "", payment = "online", couponEligible = true } = {}) {
+export function priceCart(items, { coupon = "", payment = "online", couponEligible = true, pin = "" } = {}) {
   if (!Array.isArray(items) || items.length === 0) throw new HttpError(400, "Your cart is empty.");
   if (items.length > 30) throw new HttpError(400, "Too many items in one order. Please contact us for bulk orders.");
 
@@ -36,11 +36,15 @@ export function priceCart(items, { coupon = "", payment = "online", couponEligib
   const afterDiscount = subtotal - discount;
   const shipping = afterDiscount >= PRICING.freeShippingAbove * 100 ? 0 : PRICING.shippingFee * 100;
   const codFee = payment === "cod" ? PRICING.codFee * 100 : 0;
+  const total = afterDiscount + shipping + codFee;
+  // COD: part of the total is paid online first, rounded up to whole rupees.
+  const advancePct = payment === "cod" ? (isJK(pin) ? PRICING.codAdvancePctJK : PRICING.codAdvancePct) : 0;
+  const advance = advancePct ? Math.min(total, Math.ceil(total * advancePct / 10000) * 100) : 0;
 
   return {
     lines, itemCount, subtotal, discount, discountLabel,
     coupon: couponApplied ? PRICING.couponCode : null,
     couponRejected: couponValid && !couponEligible,
-    shipping, codFee, total: afterDiscount + shipping + codFee
+    shipping, codFee, total, advancePct, advance
   };
 }

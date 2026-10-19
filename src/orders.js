@@ -11,7 +11,8 @@ export const STATUS_LABEL = {
 };
 export const PAYMENT_LABEL = {
   pending: "Payment pending", paid: "Paid online", failed: "Payment failed",
-  awaiting_link: "Awaiting payment link", cod: "Cash on delivery", refunded: "Refunded"
+  awaiting_link: "Awaiting payment link", cod: "Cash on delivery", refunded: "Refunded",
+  advance_pending: "COD advance pending", advance_paid: "Advance paid, rest on delivery"
 };
 
 const clean = (v, max) => String(v ?? "").replace(/\s+/g, " ").trim().slice(0, max);
@@ -63,33 +64,38 @@ export async function createOrder(env, body) {
   const wanted = body.payment === "cod" ? "cod" : "online";
   const method = wanted === "online" && !paymentsEnabled(env) ? "link" : wanted;
   const priced = priceCart(body.items, {
-    coupon: body.coupon, payment: method, couponEligible: await couponEligible(env, customer.phone)
+    coupon: body.coupon, payment: method, couponEligible: await couponEligible(env, customer.phone), pin: customer.pin
   });
   const id = await newOrderId(env);
   const now = Date.now();
 
+  // Online orders pay the full total now. COD orders pay the advance now (or by a
+  // WhatsApp payment link when Razorpay isn't set up) and the rest on delivery.
   let razorpay = null;
-  if (method === "online") {
+  const payNow = method === "online" ? priced.total : method === "cod" ? priced.advance : 0;
+  if (payNow && paymentsEnabled(env)) {
     const rzp = await createRazorpayOrder(env, {
-      amount: priced.total, receipt: id, notes: { order_id: id, phone: customer.phone }
+      amount: payNow, receipt: id, notes: { order_id: id, phone: customer.phone, part: method === "cod" ? "cod_advance" : "full" }
     });
     razorpay = { keyId: env.RAZORPAY_KEY_ID, orderId: rzp.id, amount: rzp.amount, currency: rzp.currency || "INR" };
   }
-  const status = method === "online" ? "pending_payment" : "placed";
-  const paymentStatus = { online: "pending", link: "awaiting_link", cod: "cod" }[method];
+  const status = method === "link" ? "placed" : "pending_payment";
+  const paymentStatus = { online: "pending", link: "awaiting_link", cod: "advance_pending" }[method];
+  const firstNote = method === "online" ? "Order created, waiting for payment"
+    : method === "cod" ? `Order created, waiting for ${priced.advancePct}% advance (${rupees(priced.advance)})` : "Order placed";
 
   const stmts = [
     env.DB.prepare(`INSERT INTO orders (id, created_at, updated_at, status, payment_method, payment_status, name, phone, email,
-      address, city, pin, gift_note, coupon, discount_label, subtotal, discount, shipping, cod_fee, total, razorpay_order_id)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(
+      address, city, pin, gift_note, coupon, discount_label, subtotal, discount, shipping, cod_fee, total, advance, razorpay_order_id)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(
       id, now, now, status, method, paymentStatus, customer.name, customer.phone, customer.email || null,
       customer.address, customer.city, customer.pin, clean(body.gift, 140) || null, priced.coupon, priced.discountLabel || null,
-      priced.subtotal, priced.discount, priced.shipping, priced.codFee, priced.total, razorpay?.orderId || null),
+      priced.subtotal, priced.discount, priced.shipping, priced.codFee, priced.total, priced.advance, razorpay?.orderId || null),
     ...priced.lines.map(l => env.DB.prepare(`INSERT INTO order_items (order_id, product_id, variant_id, name, variant_label, qty,
       unit_price, subscription, line_total) VALUES (?,?,?,?,?,?,?,?,?)`).bind(
       id, l.product_id, l.variant_id, l.name, l.variant_label, l.qty, l.unit_price, l.subscription, l.line_total)),
     env.DB.prepare("INSERT INTO order_events (order_id, at, status, note, actor, public) VALUES (?,?,?,?,?,1)").bind(
-      id, now, status, method === "online" ? "Order created, waiting for payment" : "Order placed", "customer")
+      id, now, status, firstNote, "customer")
   ];
   await env.DB.batch(stmts);
 
@@ -98,8 +104,8 @@ export async function createOrder(env, body) {
 
 export async function verifyPayment(env, body) {
   const order = await env.DB.prepare("SELECT * FROM orders WHERE id = ?").bind(String(body.orderId || "")).first();
-  if (!order || order.payment_method !== "online") throw new HttpError(404, "Order not found.");
-  if (order.payment_status === "paid") return { order: await loadPublicOrder(env, order.id) };
+  if (!order || !["online", "cod"].includes(order.payment_method)) throw new HttpError(404, "Order not found.");
+  if (["paid", "advance_paid"].includes(order.payment_status)) return { order: await loadPublicOrder(env, order.id) };
   // Use the Razorpay order ID stored on our side, not the one sent by the browser.
   const valid = body.razorpay_order_id === order.razorpay_order_id &&
     await verifyPaymentSignature(env, order.razorpay_order_id, body.razorpay_payment_id, body.razorpay_signature);
@@ -108,17 +114,21 @@ export async function verifyPayment(env, body) {
   return { order: await loadPublicOrder(env, order.id) };
 }
 
+// Razorpay confirmed a payment: the full total for online orders, the advance for COD orders.
 async function markPaid(env, order, paymentId, actor) {
   const now = Date.now();
   const newStatus = order.status === "pending_payment" ? "placed" : order.status;
-  const res = await env.DB.prepare(`UPDATE orders SET payment_status = 'paid', razorpay_payment_id = COALESCE(?, razorpay_payment_id),
-      paid_at = ?, status = ?, updated_at = ? WHERE id = ? AND payment_status != 'paid'`)
-    .bind(paymentId || null, now, newStatus, now, order.id).run();
+  const advance = order.payment_method === "cod" && order.advance > 0;
+  const res = await env.DB.prepare(`UPDATE orders SET payment_status = ?, razorpay_payment_id = COALESCE(?, razorpay_payment_id),
+      paid_at = ?, status = ?, updated_at = ? WHERE id = ? AND payment_status NOT IN ('paid','advance_paid')`)
+    .bind(advance ? "advance_paid" : "paid", paymentId || null, now, newStatus, now, order.id).run();
   if (res.meta?.changes) {
     await env.DB.prepare("INSERT INTO order_events (order_id, at, status, note, actor, public) VALUES (?,?,?,?,?,1)")
-      .bind(order.id, now, newStatus, "Payment received", actor).run();
+      .bind(order.id, now, newStatus, advance ? advanceNote(order) : "Payment received", actor).run();
   }
 }
+export const rupees = paise => "₹" + (paise / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+export const advanceNote = o => `Advance of ${rupees(o.advance)} received. ${rupees(o.total - o.advance)} to pay on delivery`;
 
 export async function handleWebhook(env, request) {
   const raw = await request.text();
@@ -132,6 +142,9 @@ export async function handleWebhook(env, request) {
   if (!order) return { ok: true, ignored: true };
   if (evt.event === "payment.captured" || evt.event === "order.paid") {
     await markPaid(env, order, payment?.id, "razorpay");
+  } else if (evt.event === "payment.failed" && order.payment_status === "advance_pending") {
+    await env.DB.prepare("INSERT INTO order_events (order_id, at, status, note, actor, public) VALUES (?,?,?,?,?,0)")
+      .bind(order.id, Date.now(), order.status, `Advance payment attempt failed: ${clean(payment?.error_description, 200) || "unknown reason"}`, "razorpay").run();
   } else if (evt.event === "payment.failed" && order.payment_status === "pending") {
     const now = Date.now();
     await env.DB.batch([
@@ -154,8 +167,9 @@ export async function loadPublicOrder(env, id) {
     city: o.city, pin: o.pin, name: o.name.split(" ")[0],
     items: items.map(i => ({ pid: i.product_id, vid: i.variant_id, name: i.name, variant: i.variant_label, qty: i.qty, sub: !!i.subscription, lineTotal: i.line_total })),
     subtotal: o.subtotal, discount: o.discount, discountLabel: o.discount_label, shipping: o.shipping, codFee: o.cod_fee, total: o.total,
+    advance: o.advance || 0, balance: o.advance ? o.total - o.advance : 0,
     courier: o.courier, awb: o.awb, trackingUrl: o.tracking_url,
-    razorpayOrderId: o.payment_status === "pending" || o.payment_status === "failed" ? o.razorpay_order_id : null,
+    razorpayOrderId: ["pending", "failed", "advance_pending"].includes(o.payment_status) ? o.razorpay_order_id : null,
     events: events.map(e => ({ at: e.at, status: e.status, label: STATUS_LABEL[e.status] || e.status, note: e.note }))
   };
 }

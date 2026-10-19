@@ -23,8 +23,9 @@ Runs entirely on **Cloudflare** (free plan): the shop, the API and the database.
 1. **Needs action** lists new orders.
 2. Tap an order, then **Confirm order** → **Mark packed** → **Mark shipped** (add courier and tracking number) → **Mark delivered**.
 3. **WhatsApp update** opens WhatsApp with a ready message and tracking link for the customer.
-4. Cash on delivery and payment-link orders: tap **Mark paid** once money arrives.
-5. Notes are private unless you tick "Show this note to the customer".
+4. Payment-link orders: tap **Mark paid** once money arrives.
+5. Cash on delivery: the customer pays an advance online first (50%, or 20% for Jammu & Kashmir PIN codes; set in `src/catalog.js`). Without Razorpay keys, send a payment link for the advance and tap **Mark advance paid**. When the courier hands over the rest, tap **Mark cash collected**.
+6. Notes are private unless you tick "Show this note to the customer".
 
 **Customers track orders** under *My orders* on the shop, or with a link like `https://shahapiaries.in/#track-SA-261018-7K3QX`.
 
