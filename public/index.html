@@ -227,6 +227,14 @@ td.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 
 /* newsletter */
 .news{background:var(--honey-soft)}
+.ig .wrap{display:grid;grid-template-columns:1fr auto;gap:32px;align-items:center}
+.ig .handle{display:inline-flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:.95rem;margin-top:12px}
+.ig .acts{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+.ig .qr{background:#fff;border:1px solid var(--line);border-radius:18px;padding:10px;text-align:center}
+.ig .qr img{width:168px;height:168px;display:block}
+.ig .qr small{display:block;color:#5E5E5E;font-size:.74rem;margin:2px 0 4px}
+.iglink{display:inline-flex;align-items:center;gap:6px}
+@media (max-width:820px){.ig .wrap{grid-template-columns:1fr}.ig .qr{display:none}}
 .news .wrap{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:center}
 .news form{display:flex;gap:8px;flex-wrap:wrap}
 .news input{flex:1 1 200px;min-width:0}
@@ -693,6 +701,19 @@ footer{background:var(--surface);border-top:1px solid var(--line);padding-block:
       </form>
     </div>
   </section>
+
+  <section class="band ig" id="instagram">
+    <div class="wrap">
+      <div>
+        <p class="eyebrow">Instagram</p>
+        <h2 style="margin-top:8px">Follow the hives through the seasons</h2>
+        <p class="muted" style="margin-top:10px">Harvest days, new batches and life with the bees in Kashmir.</p>
+        <a class="handle" href="https://www.instagram.com/shahapiaries/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>@shahapiaries</a>
+        <div class="acts"><a class="btn btn-pine" href="https://www.instagram.com/shahapiaries/" target="_blank" rel="noopener">Follow on Instagram</a></div>
+      </div>
+      <div class="qr"><img src="data:image/png;base64,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" alt="Instagram QR code for @shahapiaries" width="168" height="168" loading="lazy"><small>Scan with your phone</small></div>
+    </div>
+  </section>
 </main>
 
 <footer id="contact">
@@ -703,6 +724,7 @@ footer{background:var(--surface);border-top:1px solid var(--line);padding-block:
         <p class="muted" style="margin-top:12px">Babapora, Zoonimar, Srinagar, Jammu &amp; Kashmir</p>
         <p style="margin-top:10px">Email: <span class="mono" id="mailTxt"></span> <button class="chip" style="padding:3px 10px;font-size:.75rem" data-copy="email">Copy</button></p>
         <p style="margin-top:6px">WhatsApp: <span class="mono" id="phoneTxt"></span></p>
+        <p style="margin-top:6px"><a class="iglink" href="https://www.instagram.com/shahapiaries/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>@shahapiaries</a></p>
         <p class="mono muted" style="margin-top:12px;font-size:.8rem" id="fssaiTxt"></p>
       </div>
       <div><h4>Shop</h4><ul><li><a href="#shop">All honey</a></li><li><button class="link" data-add="trio">Valley Trio gift box</button></li><li><a href="#lab">Lab reports</a></li><li><button class="link" data-open="orders">Track my order</button></li></ul></div>
@@ -740,6 +762,7 @@ footer{background:var(--surface);border-top:1px solid var(--line);padding-block:
     <li><button data-go="#recipes">Recipes</button></li>
     <li><button data-go="#faq">FAQs</button></li>
     <li><button data-go="#contact">Contact</button></li>
+    <li><a href="https://www.instagram.com/shahapiaries/" target="_blank" rel="noopener">Instagram @shahapiaries</a></li>
   </ul>
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:18px">
     <button class="btn btn-ghost qa" data-open="search">Search</button>
@@ -780,6 +803,7 @@ footer{background:var(--surface);border-top:1px solid var(--line);padding-block:
 const CONFIG = {
   whatsapp: "",                 // Business WhatsApp with country code, digits only, e.g. "919XXXXXXXXX". Orders open WhatsApp with this number.
   email: "ShahApiaries@gmail.com",
+  instagram: "https://www.instagram.com/shahapiaries/",
   fssai: "FSSAI Lic. No.: applied, number shown here once issued",
   freeShippingAbove: 999,       // ₹
   shippingFee: 80,              // ₹ below free-shipping threshold
