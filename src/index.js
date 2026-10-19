@@ -3,11 +3,14 @@ import { HttpError, json, readJson, checkSameOrigin } from "./http.js";
 import { catalogResponse, createOrder, verifyPayment, handleWebhook, trackOrder } from "./orders.js";
 import { getAdmin, requireAdmin, login, logoutCookie } from "./auth.js";
 import { summary, listOrders, getOrder, updateOrder, deleteOrder } from "./admin.js";
+import { SCHEMA as PROMO_SCHEMA, seedPromoCodes, checkPromo, listPromos, createPromos, updatePromo } from "./promo.js";
 
 // Adds columns introduced after the first launch to an existing database, once per Worker instance.
 let schemaReady = null;
 function ensureSchema(env) {
   schemaReady ||= (async () => {
+    await env.DB.prepare(PROMO_SCHEMA).run();
+    await seedPromoCodes(env);
     try { await env.DB.prepare("SELECT advance FROM orders LIMIT 1").all(); }
     catch {
       try { await env.DB.prepare("ALTER TABLE orders ADD COLUMN advance INTEGER NOT NULL DEFAULT 0").run(); }
@@ -28,7 +31,10 @@ async function api(request, env, url) {
     return json(catalogResponse(env), 200, { "cache-control": "public, max-age=60" });
   }
   if (pathname === "/api/orders" && method === "POST") {
-    return json(await createOrder(env, await readJson(request)), 201);
+    return json(await createOrder(env, await readJson(request), request), 201);
+  }
+  if (pathname === "/api/coupons/check" && method === "POST") {
+    return json(await checkPromo(env, request, (await readJson(request)).code));
   }
   if (pathname === "/api/orders/verify" && method === "POST") {
     return json(await verifyPayment(env, await readJson(request)));
@@ -61,6 +67,10 @@ async function api(request, env, url) {
     if (m && method === "GET") return json(await getOrder(env, m[1].toUpperCase()));
     if (m && method === "POST") return json(await updateOrder(env, m[1].toUpperCase(), await readJson(request), admin));
     if (m && method === "DELETE") return json(await deleteOrder(env, m[1].toUpperCase()));
+    if (pathname === "/api/admin/codes" && method === "GET") return json(await listPromos(env));
+    if (pathname === "/api/admin/codes" && method === "POST") return json(await createPromos(env, await readJson(request)));
+    m = pathname.match(/^\/api\/admin\/codes\/([A-Z0-9-]{6,30})$/i);
+    if (m && method === "POST") return json(await updatePromo(env, m[1].toUpperCase(), await readJson(request)));
   }
   throw new HttpError(404, "Not found.");
 }

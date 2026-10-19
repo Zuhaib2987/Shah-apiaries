@@ -17,7 +17,10 @@ export const PRICING = {
   bulkMinItems: 3,        // buy this many items or more...
   bulkPct: 10,            // ...and save this %. Coupon and bulk do not stack; the bigger saving applies.
   subscribePct: 10,       // "every month" option on single honeys
-  maxQtyPerLine: 20
+  maxQtyPerLine: 20,
+  promoPrefixes: ["HIVE20", "FAMILY20"], // friends & family codes, e.g. HIVE20-K7QMX, one use each
+  promoPct: 20,
+  promoStartCount: 5      // codes of each type created on first run; make more in the admin under Codes
 };
 
 export const PRODUCTS = [

@@ -13,7 +13,7 @@ const H = { "content-type": "application/json", origin: t.url };
 const post = (path, body, headers = {}) => fetch(t.url + path, { method: "POST", headers: { ...H, ...headers }, body: JSON.stringify(body) });
 const customer = (phone = "9876543210") => ({ name: "Test Buyer", phone, email: "", address: "House 12, Main Road, Rajbagh", city: "Srinagar", pin: "190008" });
 
-let codId, onlineOrder, adminCookie;
+let codId, onlineOrder, adminCookie, promoCodes = [];
 
 await test("catalog lists products and online payments", async () => {
   const r = await fetch(t.url + "/api/catalog"); const j = await r.json();
@@ -169,6 +169,53 @@ await test("logged-out cookie is rejected", async () => {
   assert.match(r.headers.get("set-cookie"), /Max-Age=0/);
   const forged = adminCookie.replace(/.$/, c => (c === "a" ? "b" : "a"));
   assert.equal((await fetch(t.url + "/api/admin/orders", { headers: { cookie: forged } })).status, 401);
+});
+
+await test("10 friends & family codes exist: 5 HIVE20 and 5 FAMILY20", async () => {
+  const j = await (await fetch(t.url + "/api/admin/codes", { headers: { cookie: adminCookie } })).json();
+  assert.equal(j.codes.length, 10);
+  assert.equal(j.codes.filter(c => /^HIVE20-[A-Z2-9]{5}$/.test(c.code)).length, 5);
+  assert.equal(j.codes.filter(c => /^FAMILY20-[A-Z2-9]{5}$/.test(c.code)).length, 5);
+  promoCodes = j.codes.map(c => c.code);
+});
+
+await test("a friends & family code gives 20% once, and works again if that order is cancelled", async () => {
+  const code = promoCodes[0];
+  const chk = await post("/api/coupons/check", { code: code.toLowerCase() }); assert.equal(chk.status, 200); assert.equal((await chk.json()).pct, 20);
+  const order = () => post("/api/orders", { customer: customer("9833333333"), items: [{ pid: "acacia", vid: "1kg", qty: 1 }], coupon: code, payment: "online" });
+  const r1 = await order(); const j1 = await r1.json(); assert.equal(r1.status, 201, JSON.stringify(j1));
+  assert.equal(j1.order.discount, Math.round(144900 * 0.2)); assert.match(j1.order.discountLabel, /Friends & family/);
+  const r2 = await order(); assert.equal(r2.status, 409);
+  assert.equal((await post("/api/coupons/check", { code })).status, 409);
+  const list = await (await fetch(t.url + "/api/admin/codes", { headers: { cookie: adminCookie } })).json();
+  assert.equal(list.codes.find(c => c.code === code).used_order_id, j1.order.id);
+  await post(`/api/admin/orders/${j1.order.id}`, { status: "cancelled" }, { cookie: adminCookie });
+  const r3 = await order(); assert.equal(r3.status, 201);
+});
+
+await test("friends & family code beats the buy-3 saving and does not block WELCOME10 later", async () => {
+  const r = await post("/api/orders", { customer: customer("9844444444"), items: [{ pid: "acacia", vid: "500", qty: 3 }], coupon: promoCodes[1], payment: "online" });
+  const j = await r.json(); assert.equal(j.order.discount, Math.round(74900 * 3 * 0.2));
+  await post("/api/orders/verify", { orderId: j.order.id, razorpay_order_id: j.razorpay.orderId, razorpay_payment_id: "pay_PR1", razorpay_signature: t.sign(j.razorpay.orderId, "pay_PR1") });
+  const w = await (await post("/api/orders", { customer: customer("9844444444"), items: [{ pid: "acacia", vid: "500", qty: 1 }], coupon: "WELCOME10", payment: "online" })).json();
+  assert.equal(w.order.discount, Math.round(74900 * 0.1));
+});
+
+await test("admin can label, disable and create codes", async () => {
+  const code = promoCodes[2];
+  let j = await (await post(`/api/admin/codes/${code}`, { note: "Uncle Bashir", active: false }, { cookie: adminCookie })).json();
+  const c = j.codes.find(x => x.code === code); assert.equal(c.note, "Uncle Bashir"); assert.equal(c.active, 0);
+  assert.equal((await post("/api/coupons/check", { code })).status, 400);
+  j = await (await post("/api/admin/codes", { prefix: "family20", count: 2 }, { cookie: adminCookie })).json();
+  assert.equal(j.codes.length, 12);
+  assert.equal((await post("/api/admin/codes", { prefix: "HACK", count: 2 }, { cookie: adminCookie })).status, 400);
+  assert.equal((await post("/api/admin/codes", { prefix: "HIVE20", count: 2 })).status, 401);
+});
+
+await test("guessing codes is blocked after 15 wrong tries", async () => {
+  let last;
+  for (let i = 0; i < 16; i++) last = await post("/api/coupons/check", { code: "HIVE20-ZZZZ" + "ABCDEFGHJKLMNPQRS"[i] });
+  assert.equal(last.status, 429);
 });
 
 await test("too many wrong logins are blocked", async () => {

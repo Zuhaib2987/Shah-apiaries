@@ -27,6 +27,8 @@ Runs entirely on **Cloudflare** (free plan): the shop, the API and the database.
 5. Cash on delivery: the customer pays an advance online first (50%, or 20% for Jammu & Kashmir PIN codes; set in `src/catalog.js`). Without Razorpay keys, send a payment link for the advance and tap **Mark advance paid**. When the courier hands over the rest, tap **Mark cash collected**.
 6. Notes are private unless you tick "Show this note to the customer".
 
+**Friends & family codes:** tap **Codes** in the admin. There are 5 `HIVE20` and 5 `FAMILY20` codes, each 20% off for one order. Write who you gave each code to, then **Copy** or **Send on WhatsApp**. A code becomes usable again if its order is cancelled. **Turn off** stops a code; **Create** makes more. Codes are stored only in the database, never in GitHub.
+
 **Customers track orders** under *My orders* on the shop, or with a link like `https://shahapiaries.in/#track-SA-261018-7K3QX`.
 
 ---

@@ -810,6 +810,7 @@ const CONFIG = {
   codFee: 40,                   // ₹ extra for cash on delivery
   codAdvancePct: 50,            // COD: % paid online first, rest in cash on delivery
   codAdvancePctJK: 20,          // ...for Jammu & Kashmir PIN codes (180xxx to 193xxx)
+  promoPrefixes: ["HIVE20","FAMILY20"], // one-time friends & family codes, checked by the server
   couponCode: "WELCOME10",      // first-order code, 10% off
   couponPct: 10,
   bulkMinItems: 3,              // buy this many items or more...
@@ -923,6 +924,7 @@ let cart = store.get("cart", []).filter(l => P(l.pid)?.variants.some(v=>v.id===l
 let wish = store.get("wish", []);
 let viewed = store.get("viewed", []);
 let coupon = store.get("coupon", "");
+let promo = store.get("promo", null); // { code, pct } once the server has confirmed a friends & family code
 
 /* ---------- jar art ---------- */
 let jarN = 0;
@@ -1068,11 +1070,12 @@ function saveCart(){ store.set("cart", cart); renderCounts(); renderCart(); }
 function totals(cod=false){
   const sub = cart.reduce((a,l)=>a+unitPrice(l)*l.qty,0);
   const itemCount = cart.reduce((a,l)=>a+l.qty,0);
-  const cDisc = coupon===CONFIG.couponCode ? sub*CONFIG.couponPct/100 : 0;
+  const isPromo = !!(promo && coupon && promo.code === coupon);
+  const cDisc = isPromo ? sub*promo.pct/100 : coupon===CONFIG.couponCode ? sub*CONFIG.couponPct/100 : 0;
   const bDisc = itemCount >= CONFIG.bulkMinItems ? sub*CONFIG.bulkPct/100 : 0;
   const disc = Math.max(cDisc, bDisc);
   const couponUsed = disc>0 && cDisc>=bDisc;
-  const discLabel = !disc ? "" : couponUsed ? `Coupon ${coupon} (−${CONFIG.couponPct}%)` : `Buy ${CONFIG.bulkMinItems}+ saving (−${CONFIG.bulkPct}%)`;
+  const discLabel = !disc ? "" : couponUsed ? (isPromo ? `Friends & family ${coupon} (−${promo.pct}%)` : `Coupon ${coupon} (−${CONFIG.couponPct}%)`) : `Buy ${CONFIG.bulkMinItems}+ saving (−${CONFIG.bulkPct}%)`;
   const after = sub - disc;
   const ship = cart.length ? (after >= CONFIG.freeShippingAbove ? 0 : CONFIG.shippingFee) : 0;
   const codFee = cod && cart.length ? CONFIG.codFee : 0;
@@ -1364,7 +1367,7 @@ async function loadCatalog(){
     if (!r.ok || !(r.headers.get("content-type")||"").includes("json")) return;
     const d = await r.json();
     d.products.forEach(sp => { const p = P(sp.id); if (!p) return; sp.variants.forEach(sv => { const v = p.variants.find(x=>x.id===sv.id); if (v) Object.assign(v, { price:sv.price, mrp:sv.mrp, stock:sv.stock, label:sv.label }); }); });
-    ["freeShippingAbove","shippingFee","codFee","codAdvancePct","codAdvancePctJK","couponCode","couponPct","bulkMinItems","bulkPct","subscribePct"].forEach(k => { if (d.pricing[k] !== undefined) CONFIG[k] = d.pricing[k]; });
+    ["freeShippingAbove","shippingFee","codFee","codAdvancePct","codAdvancePctJK","couponCode","couponPct","bulkMinItems","bulkPct","subscribePct","promoPrefixes"].forEach(k => { if (d.pricing[k] !== undefined) CONFIG[k] = d.pricing[k]; });
     API.ok = true; API.online = !!d.payments.online; API.keyId = d.payments.keyId;
     renderGrid(); renderCart(); renderCounts();
     $("#freeShipTxt").textContent = `Free shipping above ${inr(CONFIG.freeShippingAbove)}`;
@@ -1397,7 +1400,7 @@ async function apiPlaceOrder(f, payment){
     });
     store.set("addr", { name:f.name, phone:f.phone, email:f.email, addr:f.addr, city:f.city, pin:f.pin });
     saveServerOrder(d.order, { phone:f.phone, name:f.name, email:f.email, rz:d.razorpay });
-    cart = []; coupon = ""; store.set("coupon",""); saveCart();
+    cart = []; coupon = ""; promo = null; store.set("coupon",""); store.set("promo",null); saveCart();
     if (d.razorpay) payOnline(d.order.id);
     else { coStep = "done"; renderOrderDone(d.order, d.couponRejected); }
   } catch(e) { err.textContent = e.message; err.hidden = false; btn.disabled = false; btn.textContent = "Place order"; }
@@ -1642,7 +1645,11 @@ document.addEventListener("submit", e => {
     return; }
   if (id==="pinForm"){ const v=$("#pinIn").value; $("#pinOut").innerHTML = eta(v) || "Enter a valid 6-digit PIN code."; return; }
   if (id==="couponForm"){ const v=$("#couponIn").value.trim().toUpperCase(); const used = store.get("orders",[]).some(o=>o.coupon===CONFIG.couponCode);
-    if (!v){ coupon=""; store.set("coupon",""); renderCart(); return; }
+    if (!v){ coupon=""; promo=null; store.set("coupon",""); store.set("promo",null); renderCart(); return; }
+    if (CONFIG.promoPrefixes.some(p => v.startsWith(p+"-"))){ const er=$("#couponErr");
+      if (!API.ok){ er.textContent="This code works once the shop is live."; er.hidden=false; return; }
+      apiJSON("/api/coupons/check", { code:v }).then(d => { coupon=d.code; promo={ code:d.code, pct:d.pct }; store.set("coupon",coupon); store.set("promo",promo); renderCart(); toast(`${d.pct}% friends & family discount applied`); })
+        .catch(ex => { er.textContent=ex.message; er.hidden=false; }); return; }
     if (v!==CONFIG.couponCode){ const er=$("#couponErr"); er.textContent="That code is not valid."; er.hidden=false; return; }
     if (used){ const er=$("#couponErr"); er.textContent="This code is for first orders only."; er.hidden=false; return; }
     coupon=v; store.set("coupon",v); renderCart(); toast(`${CONFIG.couponPct}% off applied`); return; }

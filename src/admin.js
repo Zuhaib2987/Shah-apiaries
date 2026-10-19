@@ -1,5 +1,6 @@
 import { HttpError } from "./http.js";
 import { STATUSES, STATUS_LABEL, PAYMENT_LABEL, advanceNote } from "./orders.js";
+import { releasePromo } from "./promo.js";
 
 const clean = (v, max) => String(v ?? "").trim().slice(0, max);
 
@@ -82,6 +83,7 @@ export async function updateOrder(env, id, body, admin) {
 
   const stmts = [];
   if (sets.length) stmts.push(env.DB.prepare(`UPDATE orders SET ${sets.join(", ")}, updated_at = ? WHERE id = ?`).bind(...binds, now, id));
+  if (newStatus === "cancelled" && order.status !== "cancelled") stmts.push(releasePromo(env, id)); // code can be used again
   if (newStatus !== order.status) {
     const shipNote = newStatus === "shipped" && (body.courier || body.awb) ? `${clean(body.courier, 60)} ${clean(body.awb, 60)}`.trim() : null;
     stmts.push(env.DB.prepare("INSERT INTO order_events (order_id, at, status, note, actor, public) VALUES (?,?,?,?,?,1)")

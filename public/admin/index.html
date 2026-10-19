@@ -124,6 +124,15 @@ label{font-size:.8rem;font-weight:600;display:block;margin-bottom:4px}
   .back{display:inline-flex}
   .dh{position:sticky;top:0;background:var(--surface);z-index:2;border-top:2px solid var(--honey)}
 }
+.codes{display:grid;gap:10px}
+.code-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:10px}
+.code-card.used{opacity:.75}
+.code-card .c1{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.code-card .cd{font-family:var(--f-mono,ui-monospace,monospace);font-size:1.15rem;font-weight:700;letter-spacing:.04em}
+.code-card form{display:flex;gap:8px}
+.code-card form input{flex:1;min-width:0}
+.newcodes{display:flex;gap:8px;flex-wrap:wrap;align-items:end;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+.newcodes select,.newcodes input{width:auto}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translate(-50%,10px);opacity:0;background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-weight:600;font-size:.9rem;transition:.2s;pointer-events:none;z-index:50;max-width:calc(100vw - 32px)}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 </style>
@@ -146,10 +155,23 @@ label{font-size:.8rem;font-weight:600;display:block;margin-bottom:4px}
     <div class="brand"><svg viewBox="0 0 100 100" aria-hidden="true" style="width:36px;height:36px"><use href="#leafPath"/></svg><span><b style="font-size:1.15rem">Orders</b><small>Shah Apiaries</small></span></div>
     <div class="grow"></div>
     <span class="who" id="who"></span>
+    <button class="btn btn-ghost btn-sm" id="codesBtn" aria-pressed="false">Codes</button>
     <button class="btn btn-ghost btn-sm" id="refreshBtn" aria-label="Refresh">Refresh</button>
     <button class="btn btn-ghost btn-sm" id="logoutBtn">Log out</button>
   </header>
-  <main class="wrap">
+  <main class="wrap" id="codesView" hidden>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+      <div><h2 style="font-size:1.6rem">Friends &amp; family codes</h2><p class="muted" style="font-size:.9rem;margin-top:4px" id="codesSum"></p></div>
+      <button class="btn btn-ghost btn-sm" id="codesBack">← Orders</button>
+    </div>
+    <div class="codes" id="codesList"></div>
+    <form class="newcodes" id="newCodes" style="margin-top:14px">
+      <div><label for="ncPrefix">Make more codes</label><select id="ncPrefix"></select></div>
+      <div><label for="ncCount">How many</label><input id="ncCount" type="number" min="1" max="20" value="1" style="width:80px"></div>
+      <button class="btn btn-dark btn-sm" type="submit">Create</button>
+    </form>
+  </main>
+  <main class="wrap" id="ordersView">
     <div class="stats" id="stats"></div>
     <div class="tabs" id="tabs" role="group" aria-label="Filter orders"></div>
     <form class="tools" id="searchForm"><label for="q" style="position:absolute;left:-9999px">Search</label><input id="q" type="search" placeholder="Search name, mobile, city or order number"><button class="btn btn-ghost" type="submit">Search</button></form>
@@ -365,6 +387,46 @@ $("#detail").addEventListener("submit", e => {
     if (body.status === "shipped" && !body.awb.trim()) return toast("Add the tracking number");
     return update(body, body.status === "shipped" ? "Marked shipped" : "Shipping details saved");
   }
+});
+
+/* ---------- Friends & family codes ---------- */
+async function showCodes(on){
+  $("#codesView").hidden = !on; $("#ordersView").hidden = on; $("#codesBtn").setAttribute("aria-pressed", on);
+  if (on) { $("#detailPane").hidden = true; S.sel = null; renderCodes(await api("/api/admin/codes")); }
+}
+function codeMsg(c, pct){ return `Hi! Here's your personal Shah Apiaries friends & family code for ${pct}% off: ${c.code}\n\nEnter it in the cart at ${SITE.replace(/^https?:\/\//,"")}. It works for one order.`; }
+function renderCodes(d){
+  const unused = d.codes.filter(c => !c.used_order_id && c.active).length;
+  $("#codesSum").textContent = `${d.pct}% off, one order each. ${unused} of ${d.codes.length} still unused.`;
+  $("#ncPrefix").innerHTML = d.prefixes.map(p => `<option>${p}</option>`).join("");
+  $("#codesList").innerHTML = d.codes.map(c => {
+    const state = c.used_order_id ? `<span class="pill s-delivered">Used</span>` : c.active ? `<span class="pill p-paid">Unused</span>` : `<span class="pill s-cancelled">Turned off</span>`;
+    return `<div class="code-card ${c.used_order_id||!c.active?"used":""}">
+      <div class="c1"><span class="cd">${esc(c.code)}</span>${state}</div>
+      ${c.used_order_id ? `<p style="font-size:.9rem">Used by <b>${esc(c.used_name||"")}</b> on ${when(c.used_at)} · <button class="btn btn-ghost btn-sm" data-goorder="${esc(c.used_order_id)}">${esc(c.used_order_id)}</button></p>` : ""}
+      <form data-note="${esc(c.code)}"><label class="sr" style="position:absolute;left:-9999px" for="n-${esc(c.code)}">Given to</label><input id="n-${esc(c.code)}" placeholder="Given to (e.g. Aunt Rafiqa)" value="${esc(c.note||"")}"><button class="btn btn-ghost btn-sm" type="submit">Save</button></form>
+      ${!c.used_order_id ? `<div class="actions">
+        <button class="btn btn-ghost btn-sm" data-copycode="${esc(c.code)}">Copy</button>
+        <a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(codeMsg(c, d.pct))}">Send on WhatsApp</a>
+        <button class="btn btn-ghost btn-sm" data-toggle="${esc(c.code)}" data-on="${c.active?0:1}">${c.active?"Turn off":"Turn on"}</button>
+      </div>` : ""}
+    </div>`; }).join("");
+}
+$("#codesBtn").addEventListener("click", () => showCodes($("#codesView").hidden).catch(ex => toast(ex.message)));
+$("#codesBack").addEventListener("click", () => showCodes(false));
+$("#codesList").addEventListener("click", async e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.copycode) { try { await navigator.clipboard.writeText(b.dataset.copycode); toast("Code copied"); } catch { toast("Copy not allowed here"); } return; }
+  if (b.dataset.goorder) { await showCodes(false); S.tab = ""; await loadSummary(); await loadList(); return openOrder(b.dataset.goorder); }
+  if (b.dataset.toggle) { try { renderCodes(await api("/api/admin/codes/"+encodeURIComponent(b.dataset.toggle), { method:"POST", body: JSON.stringify({ active: b.dataset.on === "1" }) })); toast(b.dataset.on === "1" ? "Code turned on" : "Code turned off"); } catch (ex) { toast(ex.message); } }
+});
+$("#codesList").addEventListener("submit", async e => {
+  e.preventDefault(); const f = e.target.closest("[data-note]"); if (!f) return;
+  try { renderCodes(await api("/api/admin/codes/"+encodeURIComponent(f.dataset.note), { method:"POST", body: JSON.stringify({ note: f.querySelector("input").value }) })); toast("Saved"); } catch (ex) { toast(ex.message); }
+});
+$("#newCodes").addEventListener("submit", async e => {
+  e.preventDefault();
+  try { renderCodes(await api("/api/admin/codes", { method:"POST", body: JSON.stringify({ prefix: $("#ncPrefix").value, count: Number($("#ncCount").value) }) })); toast("Codes created"); } catch (ex) { toast(ex.message); }
 });
 
 setInterval(() => { if (!$("#appView").hidden && !document.hidden) { loadSummary().catch(()=>{}); loadList().catch(()=>{}); } }, 60000);

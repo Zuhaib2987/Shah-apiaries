@@ -2,7 +2,7 @@ import { PRICING, findVariant, isJK } from "./catalog.js";
 import { HttpError } from "./http.js";
 
 // Recalculates an order on the server. All amounts returned are in paise.
-export function priceCart(items, { coupon = "", payment = "online", couponEligible = true, pin = "" } = {}) {
+export function priceCart(items, { coupon = "", payment = "online", couponEligible = true, pin = "", promo = null } = {}) {
   if (!Array.isArray(items) || items.length === 0) throw new HttpError(400, "Your cart is empty.");
   if (items.length > 30) throw new HttpError(400, "Too many items in one order. Please contact us for bulk orders.");
 
@@ -26,12 +26,14 @@ export function priceCart(items, { coupon = "", payment = "online", couponEligib
   const itemCount = lines.reduce((a, l) => a + l.qty, 0);
   const code = String(coupon || "").trim().toUpperCase();
   const couponValid = code !== "" && code === PRICING.couponCode;
-  const couponDisc = couponValid && couponEligible ? Math.round(subtotal * PRICING.couponPct / 100) : 0;
+  // A friends & family code (already checked by the caller) replaces the first-order coupon.
+  const couponPct = promo ? promo.pct : PRICING.couponPct;
+  const couponDisc = promo || (couponValid && couponEligible) ? Math.round(subtotal * couponPct / 100) : 0;
   const bulkDisc = itemCount >= PRICING.bulkMinItems ? Math.round(subtotal * PRICING.bulkPct / 100) : 0;
   const discount = Math.max(couponDisc, bulkDisc);
   const couponApplied = discount > 0 && couponDisc >= bulkDisc;
   const discountLabel = !discount ? "" : couponApplied
-    ? `Coupon ${PRICING.couponCode} (−${PRICING.couponPct}%)`
+    ? (promo ? `Friends & family ${promo.code} (−${promo.pct}%)` : `Coupon ${PRICING.couponCode} (−${PRICING.couponPct}%)`)
     : `Buy ${PRICING.bulkMinItems}+ saving (−${PRICING.bulkPct}%)`;
   const afterDiscount = subtotal - discount;
   const shipping = afterDiscount >= PRICING.freeShippingAbove * 100 ? 0 : PRICING.shippingFee * 100;
@@ -43,7 +45,7 @@ export function priceCart(items, { coupon = "", payment = "online", couponEligib
 
   return {
     lines, itemCount, subtotal, discount, discountLabel,
-    coupon: couponApplied ? PRICING.couponCode : null,
+    coupon: couponApplied ? (promo ? promo.code : PRICING.couponCode) : null,
     couponRejected: couponValid && !couponEligible,
     shipping, codFee, total, advancePct, advance
   };

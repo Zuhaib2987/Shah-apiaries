@@ -2,6 +2,7 @@ import { PRICING, PRODUCTS } from "./catalog.js";
 import { priceCart } from "./pricing.js";
 import { HttpError } from "./http.js";
 import { randomId } from "./crypto.js";
+import { isPromoShape, checkPromo, claimPromo, releasePromo } from "./promo.js";
 import { createRazorpayOrder, paymentsEnabled, verifyPaymentSignature, verifyWebhookSignature } from "./razorpay.js";
 
 export const STATUSES = ["pending_payment", "placed", "confirmed", "packed", "shipped", "delivered", "cancelled"];
@@ -54,19 +55,31 @@ export function catalogResponse(env) {
 
 async function couponEligible(env, phone) {
   const row = await env.DB.prepare(
-    "SELECT 1 FROM orders WHERE phone = ? AND coupon IS NOT NULL AND status NOT IN ('pending_payment','cancelled') LIMIT 1"
-  ).bind(phone).first();
+    "SELECT 1 FROM orders WHERE phone = ? AND coupon = ? AND status NOT IN ('pending_payment','cancelled') LIMIT 1"
+  ).bind(phone, PRICING.couponCode).first();
   return !row;
 }
 
-export async function createOrder(env, body) {
+export async function createOrder(env, body, request) {
   const customer = validateCustomer(body.customer);
   const wanted = body.payment === "cod" ? "cod" : "online";
   const method = wanted === "online" && !paymentsEnabled(env) ? "link" : wanted;
+  const code = String(body.coupon || "").trim().toUpperCase();
+  const promo = isPromoShape(code) ? await checkPromo(env, request, code) : null;
   const priced = priceCart(body.items, {
-    coupon: body.coupon, payment: method, couponEligible: await couponEligible(env, customer.phone), pin: customer.pin
+    coupon: body.coupon, payment: method, couponEligible: await couponEligible(env, customer.phone), pin: customer.pin, promo
   });
   const id = await newOrderId(env);
+  if (promo) await claimPromo(env, promo.code, id, customer.phone);
+  try {
+    return await saveOrder(env, body, { id, customer, method, priced });
+  } catch (err) {
+    if (promo) await releasePromo(env, id).run(); // order failed, so the code stays unused
+    throw err;
+  }
+}
+
+async function saveOrder(env, body, { id, customer, method, priced }) {
   const now = Date.now();
 
   // Online orders pay the full total now. COD orders pay the advance now (or by a
