@@ -131,15 +131,21 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;backgroun
 .owner-bio{display:grid;gap:10px;margin-top:8px;max-width:65ch}
 .owner-bio:empty{display:none}
 .owner-todo{margin-top:10px;border:1.5px dashed var(--line);border-radius:12px;padding:16px;color:var(--muted);font-size:.92rem;min-height:120px;background:var(--sunk)}
-.recog{display:grid;grid-template-columns:1fr 1.1fr;gap:32px;align-items:center;margin-top:28px}
-.recog > *{min-width:0}
+.recog-wrap{margin-top:36px}
+.recog-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:12px;align-items:start}
+.recog-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:grid}
+.recog-card .cert{border-radius:0;box-shadow:none;background:#1b1b1b}
+.recog-card .cert img{aspect-ratio:4/3;object-fit:contain;background:#fff}
+.recog-card .cert-tall img{object-fit:cover;object-position:center 35%;background:#1b1b1b}
+.recog-txt{padding:18px 20px 20px;display:grid;gap:6px}
+.recog-txt h3{font-size:1.35rem}
+@media (max-width:760px){.recog-grid{grid-template-columns:1fr}}
 .recog-meta{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:14px 0 0;font-size:.9rem}
 .recog-meta dt{color:var(--muted)}
 .recog-meta dd{margin:0;overflow-wrap:anywhere}
 .cert{display:block;position:relative;border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);background:#fff;text-decoration:none}
 .cert img{display:block;width:100%;height:auto}
 .cert-tap{position:absolute;right:10px;bottom:10px;background:rgba(30,30,30,.75);color:#fff;font-size:.75rem;padding:4px 10px;border-radius:999px}
-@media (max-width:860px){.recog{grid-template-columns:1fr}.recog .cert{order:-1}}
 @media (max-width:520px){.owner{grid-template-columns:1fr;justify-items:center;text-align:center}.owner-txt{justify-items:center}}
 .raw-types li{display:grid;justify-items:center;gap:2px;color:var(--honey-ink)}
 .raw-types li span{font-size:.72rem;color:var(--muted)}
@@ -712,19 +718,41 @@ footer{background:var(--surface);border-top:1px solid var(--line);padding-block:
         </div>
       </div>
 
-      <div class="recog">
-        <div><p class="eyebrow">Recognition</p><h3>Registered for scientific beekeeping</h3>
-          <p class="muted" style="margin-top:8px">Shah Apiaries™ holds a Certificate of Registration from the Department of Agriculture and Farmers Welfare, Government of the UT of Jammu &amp; Kashmir, Lalmandi, Srinagar, for following scientific beekeeping practices. It recognises our compliance with the department's norms for sustainable and scientific beekeeping.</p>
-          <dl class="recog-meta">
-            <dt>Issued by</dt><dd>Department of Agriculture and Farmers Welfare, Kashmir</dd>
-            <dt>Registration no.</dt><dd class="mono">AEA/DEV/TRG-Reg/2025-26/93</dd>
-            <dt>Year</dt><dd>2025-26</dd>
-          </dl>
+      <div class="recog-wrap">
+        <p class="eyebrow">Recognition &amp; awards</p>
+        <div class="recog-grid">
+          <article class="recog-card">
+            <a class="cert cert-tall" href="img/award-nbhm.webp" target="_blank" rel="noopener" aria-label="Open the beekeeping award full size">
+              <img src="img/award-nbhm-560.webp" srcset="img/award-nbhm-560.webp 560w, img/award-nbhm.webp 900w" sizes="(max-width:860px) 100vw, 540px" alt="Award plaque presented to Ghulam Mohidin Shah by the Department of Agriculture and Farmers Welfare under the National Beekeeping and Honey Mission, for exemplary work in beekeeping" width="900" height="1286" loading="lazy" decoding="async">
+              <span class="cert-tap">Tap to view full size</span>
+            </a>
+            <div class="recog-txt">
+              <p class="eyebrow">Award</p>
+              <h3>For exemplary work in beekeeping</h3>
+              <p class="muted">Presented to Gulam Mohi Ud Din Shah by the Department of Agriculture &amp; Farmers Welfare under the National Beekeeping &amp; Honey Mission (NBHM), "with immense appreciation" for his exemplary work in the field of beekeeping.</p>
+              <dl class="recog-meta">
+                <dt>Presented by</dt><dd>Department of Agriculture &amp; Farmers Welfare</dd>
+                <dt>Under</dt><dd>National Beekeeping &amp; Honey Mission (NBHM), National Bee Board</dd>
+              </dl>
+            </div>
+          </article>
+          <article class="recog-card">
+            <a class="cert" href="img/certificate-beekeeping.webp" target="_blank" rel="noopener" aria-label="Open the beekeeping registration certificate full size">
+              <img src="img/certificate-beekeeping-720.webp" srcset="img/certificate-beekeeping-720.webp 720w, img/certificate-beekeeping.webp 1320w" sizes="(max-width:860px) 100vw, 540px" alt="Certificate of Registration for Shah Apiaries from the Department of Agriculture and Farmers Welfare, Government of UT of Jammu and Kashmir, for scientific beekeeping practices" width="1320" height="978" loading="lazy" decoding="async">
+              <span class="cert-tap">Tap to view full size</span>
+            </a>
+            <div class="recog-txt">
+              <p class="eyebrow">Registration</p>
+              <h3>Registered for scientific beekeeping</h3>
+              <p class="muted">Shah Apiaries™ holds a Certificate of Registration from the Department of Agriculture and Farmers Welfare, Government of the UT of Jammu &amp; Kashmir, Lalmandi, Srinagar, recognising our compliance with the department's norms for sustainable and scientific beekeeping.</p>
+              <dl class="recog-meta">
+                <dt>Issued by</dt><dd>Department of Agriculture and Farmers Welfare, Kashmir</dd>
+                <dt>Registration no.</dt><dd class="mono">AEA/DEV/TRG-Reg/2025-26/93</dd>
+                <dt>Year</dt><dd>2025-26</dd>
+              </dl>
+            </div>
+          </article>
         </div>
-        <a class="cert" href="img/certificate-beekeeping.webp" target="_blank" rel="noopener" aria-label="Open the beekeeping registration certificate full size">
-          <img src="img/certificate-beekeeping-720.webp" srcset="img/certificate-beekeeping-720.webp 720w, img/certificate-beekeeping.webp 1320w" sizes="(max-width:860px) 100vw, 560px" alt="Certificate of Registration for Shah Apiaries from the Department of Agriculture and Farmers Welfare, Government of UT of Jammu and Kashmir, for scientific beekeeping practices" width="1320" height="978" loading="lazy" decoding="async">
-          <span class="cert-tap">Tap to view full size</span>
-        </a>
       </div>
     </div>
   </section>
