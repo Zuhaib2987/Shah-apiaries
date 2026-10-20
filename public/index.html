@@ -154,6 +154,9 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;backgroun
 .recog-teaser{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:24px;align-items:center;margin-top:24px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:clamp(16px,3vw,28px);text-decoration:none;color:inherit;transition:box-shadow .2s,border-color .2s}
 .recog-teaser:hover{border-color:var(--honey);box-shadow:var(--shadow)}
 .rt-thumbs{display:grid;grid-template-columns:.7fr 1fr;gap:10px;align-items:center}
+.rt-thumbs > span{display:grid;gap:10px}
+.since{display:inline-block;justify-self:start;background:var(--honey-soft);color:var(--honey-ink);font-weight:600;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;padding:4px 12px;border-radius:999px;margin-top:2px}
+@media (max-width:520px){.since{justify-self:center}}
 .rt-thumbs img{width:100%;height:auto;border-radius:10px;box-shadow:0 8px 20px -10px rgba(0,0,0,.35)}
 .rt-txt{display:grid;gap:6px;min-width:0}
 .rt-txt h3{font-size:clamp(1.3rem,2.4vw,1.7rem)}
@@ -723,6 +726,7 @@ footer{background:var(--surface);border-top:1px solid var(--line);padding-block:
           <p class="eyebrow">The owner</p>
           <h3>Gulam Mohi Ud Din Shah</h3>
           <p class="owner-role">Owner and proprietor, Shah Apiaries™</p>
+          <p class="since">Beekeeping since 1967</p>
           <!-- OWNER STORY: write a few short paragraphs here (how he started beekeeping, years of experience, what he cares about). -->
           <div class="owner-bio" id="ownerBio"></div>
           <p class="owner-todo" data-placeholder>Space for a short introduction to Gulam Mohi Ud Din Shah, 2 to 3 lines. His full story goes on the About us page. Shown only while the shop is in preview.</p>
@@ -731,12 +735,12 @@ footer{background:var(--surface);border-top:1px solid var(--line);padding-block:
       </a>
 
       <a class="recog-teaser" href="/about#recognition">
-        <div class="rt-thumbs" aria-hidden="true"><img src="img/award-nbhm-560.webp" alt="" width="560" height="800" loading="lazy" decoding="async"><img src="img/certificate-beekeeping-720.webp" alt="" width="720" height="533" loading="lazy" decoding="async"></div>
+        <div class="rt-thumbs" aria-hidden="true"><img src="img/award-nbhm-560.webp" alt="" width="560" height="800" loading="lazy" decoding="async"><span><img src="img/certificate-beekeeping-720.webp" alt="" width="720" height="533" loading="lazy" decoding="async"><img src="img/beekeeper-card-2001-720.webp" alt="" width="720" height="542" loading="lazy" decoding="async"></span></div>
         <div class="rt-txt">
           <p class="eyebrow">Recognition &amp; awards</p>
           <h3>Honoured for excellence in beekeeping</h3>
-          <p class="muted">Awarded by the Department of Agriculture &amp; Farmers Welfare, J&amp;K, under the National Beekeeping &amp; Honey Mission for exemplary work in beekeeping, and registered by the department for scientific beekeeping practices.</p>
-          <span class="more">View the award and certificate →</span>
+          <p class="muted">A registered honey producer and bee breeder with the Department of Agriculture since 2001, awarded under the National Beekeeping &amp; Honey Mission for exemplary work in beekeeping, and registered for scientific beekeeping practices.</p>
+          <span class="more">View our recognitions →</span>
         </div>
       </a>
     </div>

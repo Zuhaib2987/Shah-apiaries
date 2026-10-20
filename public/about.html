@@ -41,10 +41,12 @@ main{max-width:1040px}
 .recog-meta{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:10px 0 0;font-size:.9rem}
 .recog-meta dt{color:var(--muted)}
 .recog-meta dd{margin:0;overflow-wrap:anywhere}
+.recog-card.wide{grid-column:1/-1;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);align-items:center}
+.recog-card.wide .cert img{aspect-ratio:auto;object-fit:contain}
 .cta{margin-top:44px;background:var(--honey-soft);border-radius:var(--r);padding:22px;display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between}
 .cta h2{margin:0;font-size:1.5rem}
 .btn{display:inline-block;background:var(--honey);color:#1E1E1E;font-weight:600;text-decoration:none;border-radius:999px;padding:12px 22px}
-@media (max-width:760px){.founder,.recog-grid{grid-template-columns:1fr}.portrait{max-width:340px}.gallery{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:760px){.founder,.recog-grid,.recog-card.wide{grid-template-columns:1fr}.portrait{max-width:340px}.gallery{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
 <body>
@@ -56,7 +58,7 @@ main{max-width:1040px}
 <main>
   <p class="eyebrow">About us</p>
   <h1>The people behind the hives</h1>
-  <p class="lede">Shah Apiaries™ is a family beekeeping business from Babapora, Zoonimar, Srinagar. Every jar we sell comes from colonies our family looks after, through the seasons, across the valleys of Kashmir.</p>
+  <p class="lede">Shah Apiaries™ is a family beekeeping business from Babapora, Zoonimar, Srinagar. Our founder has kept bees since 1967, and every jar we sell comes from colonies our family looks after, through the seasons, across the valleys of Kashmir.</p>
 
   <section class="founder" aria-labelledby="founder-h">
     <!-- PHOTO: replace this box with <img src="/img/owner.webp" alt="Gulam Mohi Ud Din Shah at the apiary" style="width:100%;border-radius:14px"> -->
@@ -64,9 +66,9 @@ main{max-width:1040px}
     <div class="story">
       <p class="eyebrow">Our founder</p>
       <h2 id="founder-h">Gulam Mohi Ud Din Shah</h2>
-      <p class="role">Owner and proprietor, Shah Apiaries™</p>
+      <p class="role">Owner and proprietor, Shah Apiaries™ · Beekeeping since 1967</p>
       <!-- STORY: replace each box below with a <p> paragraph. -->
-      <div class="slot para-slot"><span><b>Paragraph 1: the beginning</b>Where he grew up and how he first started keeping bees.</span></div>
+      <div class="slot para-slot"><span><b>Paragraph 1: the beginning (1967)</b>Where he grew up and how he first started keeping bees in 1967.</span></div>
       <div class="slot para-slot"><span><b>Paragraph 2: building the apiary</b>How the colonies grew, the places the bees travel to, and the years of work.</span></div>
       <div class="slot para-slot"><span><b>Paragraph 3: his way of beekeeping</b>What he believes in: raw honey, care for the bees, honest work.</span></div>
       <div class="slot para-slot"><span><b>Paragraph 4: the family today</b>How the next generation carries the work forward as Shah Apiaries™.</span></div>
@@ -82,8 +84,25 @@ main{max-width:1040px}
   </div>
 
   <h2 id="recognition">Recognition &amp; awards</h2>
-  <p class="muted" style="margin-bottom:6px">Our work has been recognised by the Department of Agriculture &amp; Farmers Welfare, Government of the UT of Jammu &amp; Kashmir.</p>
+  <p class="muted" style="margin-bottom:6px">Over more than two decades, our work has been registered and recognised by the Department of Agriculture, Government of Jammu &amp; Kashmir.</p>
   <div class="recog-grid">
+          <article class="recog-card wide">
+            <a class="cert" href="/img/beekeeper-card-2001.webp" target="_blank" rel="noopener" aria-label="Open the 2001 beekeeper registration card full size">
+              <img src="/img/beekeeper-card-2001-720.webp" srcset="/img/beekeeper-card-2001-720.webp 720w, /img/beekeeper-card-2001.webp 1400w" sizes="(max-width:760px) 100vw, 560px" alt="Beekeepers Registration Card no. 54 issued by the Office of the Apiculture Development Officer, Department of Agriculture, Lal Mandi, Srinagar, to Gh. Mohi-ud-din Shah on 31 December 2001" width="1400" height="1054" loading="lazy" decoding="async">
+              <span class="cert-tap">Tap to view full size</span>
+            </a>
+            <div class="recog-txt">
+              <p class="eyebrow">Since 2001</p>
+              <h3>Registered honey producer and bee breeder</h3>
+              <p class="muted">Verified and registered by the Department of Agriculture on 31 December 2001. The Office of the Apiculture Development Officer, Lal Mandi, Srinagar, issued Gulam Mohi Ud Din Shah his Beekeepers Registration Card as a honey producer and bee breeder, for his apiary at Zoonimar.</p>
+              <dl class="recog-meta">
+                <dt>Issued by</dt><dd>Apiculture Development Officer, Department of Agriculture, District Srinagar</dd>
+                <dt>Card no.</dt><dd class="mono">54</dd>
+                <dt>Date of issue</dt><dd>31 December 2001</dd>
+                <dt>Registered as</dt><dd>Honey producer and bee breeder</dd>
+              </dl>
+            </div>
+          </article>
           <article class="recog-card">
             <a class="cert cert-tall" href="/img/award-nbhm.webp" target="_blank" rel="noopener" aria-label="Open the beekeeping award full size">
               <img src="/img/award-nbhm-560.webp" srcset="/img/award-nbhm-560.webp 560w, /img/award-nbhm.webp 900w" sizes="(max-width:860px) 100vw, 540px" alt="Award plaque presented to Ghulam Mohidin Shah by the Department of Agriculture and Farmers Welfare under the National Beekeeping and Honey Mission, for exemplary work in beekeeping" width="900" height="1286" loading="lazy" decoding="async">
