@@ -21,7 +21,7 @@ FREE = cfg("freeShippingAbove","₹999","rupees"); SHIP = cfg("shippingFee","₹
 CPCT = cfg("couponPct","10%","pct"); CCODE = cfg("couponCode","WELCOME10"); PPCT = cfg("promoPct","20%","pct")
 BULKN = cfg("bulkMinItems","3"); BULKP = cfg("bulkPct","10%","pct"); SUBP = cfg("subscribePct","10%","pct")
 
-PAGES = [("privacy","Privacy policy"),("terms","Terms &amp; conditions"),("refund-policy","Refunds &amp; cancellations"),("shipping-policy","Shipping policy"),("contact","Contact &amp; grievances")]
+PAGES = [("about","About us"),("privacy","Privacy policy"),("terms","Terms &amp; conditions"),("refund-policy","Refunds &amp; cancellations"),("shipping-policy","Shipping policy"),("contact","Contact &amp; grievances")]
 
 def page(slug, title, eyebrow, intro, summary, sections):
     toc = "".join(f'<li><a href="#{sid}">{re.sub(r"^\d+\.\s*","",h)}</a></li>' for sid,h,_ in sections)
