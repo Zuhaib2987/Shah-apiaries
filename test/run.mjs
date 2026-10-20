@@ -227,6 +227,9 @@ await test("too many wrong logins are blocked", async () => {
 await test("storefront and admin pages are served", async () => {
   const shop = await fetch(t.url + "/"); assert.equal(shop.status, 200); assert.match(await shop.text(), /Shah Apiaries/);
   const admin = await fetch(t.url + "/admin"); assert.equal(admin.status, 200); assert.match(await admin.text(), /Orders/);
+  for (const [path, text] of [["/privacy", /Grievance Officer/], ["/terms", /Cash on delivery/], ["/refund-policy", /48 hours/], ["/shipping-policy", /Free shipping/], ["/contact", /21026414000454/]]) {
+    const r = await fetch(t.url + path); assert.equal(r.status, 200, path); assert.match(await r.text(), text);
+  }
 });
 t.close();
 

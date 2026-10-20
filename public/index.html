@@ -742,7 +742,7 @@ footer{background:var(--surface);border-top:1px solid var(--line);padding-block:
         <p class="mono muted" style="margin-top:12px;font-size:.8rem" id="fssaiTxt"></p>
       </div>
       <div><h4>Shop</h4><ul><li><a href="#shop">All honey</a></li><li><button class="link" data-add="trio">Valley Trio gift box</button></li><li><a href="#lab">Lab reports</a></li><li><button class="link" data-open="orders">Track my order</button></li></ul></div>
-      <div><h4>Help</h4><ul><li><button class="link" data-policy="shipping">Shipping policy</button></li><li><button class="link" data-policy="refund">Refund &amp; replacement</button></li><li><button class="link" data-policy="privacy">Privacy policy</button></li><li><button class="link" data-policy="terms">Terms of service</button></li></ul></div>
+      <div><h4>Help</h4><ul><li><a href="/shipping-policy" data-policy="shipping">Shipping policy</a></li><li><a href="/refund-policy" data-policy="refund">Refunds &amp; cancellations</a></li><li><a href="/privacy" data-policy="privacy">Privacy policy</a></li><li><a href="/terms" data-policy="terms">Terms &amp; conditions</a></li><li><a href="/contact" data-policy="contact">Contact &amp; grievances</a></li></ul></div>
       <div><h4>Follow</h4><ul><li><a href="https://www.instagram.com/shahapiaries/" target="_blank" rel="noopener">Instagram @shahapiaries</a></li><li><a href="#faq">FAQs</a></li><li><a href="#story">Our story</a></li></ul></div>
     </div>
     <div class="legal">
@@ -1345,7 +1345,7 @@ function renderCheckout(lastOrder){
     <div id="coSum" style="display:grid;gap:6px;border-top:1px solid var(--line);padding-top:12px"></div>
     <p class="err" id="coErr" hidden></p>
     <button class="btn btn-honey btn-block" type="submit">Place order</button>
-    <p class="hint" style="text-align:center;margin:0">By placing the order you agree to our <button type="button" class="link" style="border:0;background:none;padding:0;text-decoration:underline;color:var(--honey-ink)" data-policy="terms">terms</button> and <button type="button" class="link" style="border:0;background:none;padding:0;text-decoration:underline;color:var(--honey-ink)" data-policy="refund">refund policy</button>.</p>
+    <p class="hint" style="text-align:center;margin:0">By placing the order you agree to our <a href="/terms" target="_blank" rel="noopener" class="link" style="border:0;background:none;padding:0;text-decoration:underline;color:var(--honey-ink)" data-policy="terms">terms</a>, <a href="/privacy" target="_blank" rel="noopener" class="link" style="border:0;background:none;padding:0;text-decoration:underline;color:var(--honey-ink)" data-policy="privacy">privacy policy</a> and <a href="/refund-policy" target="_blank" rel="noopener" class="link" style="border:0;background:none;padding:0;text-decoration:underline;color:var(--honey-ink)" data-policy="refund">refund policy</a>.</p>
   </form>`;
   updateCoSum(); if (saved.pin) $("#coEta").innerHTML = eta(saved.pin) || "";
 }
@@ -1652,7 +1652,7 @@ document.addEventListener("click", e => {
   if (d.rm!==undefined){ cart.splice(+d.rm,1); saveCart(); return; }
   if (d.cq){ const [i,dq]=d.cq.split("|").map(Number); cart[i].qty+=dq; if(cart[i].qty<1) cart.splice(i,1); else cart[i].qty=Math.min(20,cart[i].qty); saveCart(); return; }
   if ("checkout" in d){ openCheckout(); return; }
-  if (d.policy){ const [ti,html]=POLICIES[d.policy]; $("#polTitle").textContent=ti; $("#polBody").innerHTML=html+`<p class="hint" style="margin-top:18px">Last updated ${new Date().toLocaleDateString("en-IN",{month:"long",year:"numeric"})}.</p>`; open("policy"); return; }
+  if (d.policy){ if (API.ok || !POLICIES[d.policy]) return; /* live shop: open the full policy page */ e.preventDefault(); const [ti,html]=POLICIES[d.policy]; $("#polTitle").textContent=ti; $("#polBody").innerHTML=html+`<p class="hint" style="margin-top:18px">Last updated ${new Date().toLocaleDateString("en-IN",{month:"long",year:"numeric"})}.</p>`; open("policy"); return; }
   if (d.copy){ copy(d.copy==="email"?CONFIG.email:CONFIG.couponCode); return; }
   if (d.batch){ $("#batchIn").value=d.batch; renderReport(d.batch); $("#batchErr").hidden=true; return; }
   if (d.star){ $$("#revStars [data-star]").forEach(b=>b.setAttribute("aria-pressed", b===t)); return; }

@@ -1,0 +1,53 @@
+/* Shared styles for the policy pages (privacy, terms, refunds, shipping, contact) */
+:root{
+  --bg:#FFFFFF; --sunk:#F7F6F2; --ink:#1E1E1E; --muted:#5E5E5E; --line:#E8E6E1;
+  --honey:#F2C230; --honey-ink:#7A5800; --honey-soft:#FFF7DB; --banner-bg:#1F4733; --banner-fg:#F4F7F1;
+  --f-display:"Adobe Caslon Pro","Libre Caslon Text","Big Caslon",Georgia,serif;
+  --f-body:"Avenir","Avenir Next","Nunito Sans","Segoe UI",system-ui,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-weight:300;font-size:16.5px;line-height:1.65;-webkit-font-smoothing:antialiased}
+b,strong{font-weight:600}
+a{color:inherit;text-underline-offset:3px}
+:focus-visible{outline:3px solid var(--honey);outline-offset:2px;border-radius:6px}
+.bar{background:var(--banner-bg);color:var(--banner-fg);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;text-align:center;padding:8px 16px}
+.top{border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:5}
+.top .in{max-width:860px;margin:0 auto;padding:12px max(16px,env(safe-area-inset-left,0px));display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:8px;text-decoration:none}
+.brand svg{width:40px;height:40px;flex:none}
+.brand b{font-family:var(--f-display);font-style:italic;font-weight:400;font-size:1.45rem;line-height:1}
+.tm{font-size:.5em;vertical-align:top;position:relative;top:.35em;margin-left:2px;font-style:normal;font-family:var(--f-body);font-weight:400}
+.back{font-size:.9rem;font-weight:600;text-decoration:none;border:1.5px solid var(--line);border-radius:999px;padding:7px 14px;white-space:nowrap}
+main{max-width:860px;margin:0 auto;padding:32px max(16px,env(safe-area-inset-left,0px)) 64px}
+.eyebrow{font-weight:600;font-size:.74rem;letter-spacing:.18em;text-transform:uppercase;color:var(--honey-ink);margin:0}
+h1,h2,h3{font-family:var(--f-display);font-style:italic;font-weight:400;line-height:1.15;text-wrap:balance}
+h1{font-size:clamp(2.1rem,6vw,3rem);margin:8px 0 6px}
+h2{font-size:1.55rem;margin:40px 0 10px;padding-top:8px;scroll-margin-top:80px}
+h3{font-size:1.15rem;margin:22px 0 6px}
+p,li{max-width:70ch}
+p{margin:0 0 12px}
+ul,ol{padding-left:22px;margin:0 0 12px}
+li{margin:4px 0}
+.meta{color:var(--muted);font-size:.9rem}
+.summary{background:var(--honey-soft);border-radius:14px;padding:16px 18px;margin:22px 0}
+.summary p:last-child,.summary ul:last-child{margin-bottom:0}
+.toc{border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:22px 0}
+.toc ol{columns:2;column-gap:28px;margin:6px 0 0}
+@media (max-width:620px){.toc ol{columns:1}}
+.toc a{text-decoration:none}
+.toc a:hover{text-decoration:underline}
+table{border-collapse:collapse;width:100%;margin:8px 0 16px;font-size:.92rem}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--sunk);font-weight:600}
+.scroll{overflow-x:auto}
+.card{border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:12px 0}
+.card p:last-child{margin-bottom:0}
+footer{border-top:1px solid var(--line);background:var(--sunk)}
+footer .in{max-width:860px;margin:0 auto;padding:22px max(16px,env(safe-area-inset-left,0px));display:flex;flex-wrap:wrap;gap:8px 18px;font-size:.9rem}
+footer .in a{text-decoration:none}
+footer .in a:hover,footer .in a[aria-current]{text-decoration:underline}
+footer .legal{width:100%;color:var(--muted);font-size:.82rem;margin-top:6px}
+@media print{.bar,.top,footer,.toc{display:none}main{padding:0}}
+.toc li{margin:0 0 6px;break-inside:avoid}
