@@ -202,9 +202,21 @@ td.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 
 /* story */
 .story-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
-.valley{position:relative;aspect-ratio:4/3;max-width:100%;border-radius:var(--r);overflow:hidden;background:linear-gradient(180deg,#9EC3D6 0%,#D8E6E9 46%,#9DB79A 47%,#3F6B4A 100%)}
-.valley canvas{width:100%;height:100%;display:block}
-.valley figcaption{position:absolute;left:14px;bottom:12px;font-family:var(--f-mono);font-size:.72rem;letter-spacing:.08em;color:#F4F7F1;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.slider{position:relative;border-radius:var(--r);overflow:hidden;background:var(--sunk);aspect-ratio:4/5;max-height:640px;width:100%;justify-self:center}
+.slides{list-style:none;margin:0;padding:0;display:flex;height:100%;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;scrollbar-width:none;overscroll-behavior-x:contain}
+.slides::-webkit-scrollbar{display:none}
+.slide{flex:0 0 100%;height:100%;scroll-snap-align:start;scroll-snap-stop:always;position:relative}
+.slide img{width:100%;height:100%;object-fit:cover;display:block}
+.slide .cap{position:absolute;left:14px;bottom:40px;font-family:var(--f-mono);font-size:.72rem;letter-spacing:.08em;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.7)}
+.slide::after{content:"";position:absolute;inset:auto 0 0;height:90px;background:linear-gradient(transparent,rgba(0,0,0,.45));pointer-events:none}
+.slide .cap{z-index:1}
+.sl-btn{position:absolute;top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:50%;border:0;background:rgba(255,255,255,.88);color:var(--ink);display:grid;place-items:center;box-shadow:0 4px 14px rgba(0,0,0,.18);z-index:2}
+.sl-btn:hover{background:#fff}
+.sl-prev{left:10px}.sl-next{right:10px}
+.sl-dots{position:absolute;left:0;right:0;bottom:12px;display:flex;justify-content:center;gap:8px;z-index:2}
+.sl-dots button{width:9px;height:9px;padding:0;border-radius:50%;border:0;background:rgba(255,255,255,.55);transition:width .25s,background .25s}
+.sl-dots button[aria-selected="true"]{width:24px;border-radius:5px;background:#fff}
+@media (max-width:860px){.slider{aspect-ratio:4/5;max-height:none}}
 .steps{display:grid;gap:0;margin-top:26px;counter-reset:s;list-style:none;padding:0}
 .steps li{display:grid;grid-template-columns:44px 1fr;gap:14px;padding:14px 0;border-top:1px solid var(--line)}
 .steps li::before{counter-increment:s;content:counter(s);display:grid;place-items:center;width:36px;height:40px;font-family:var(--f-mono);font-weight:500;background:var(--honey-soft);color:var(--honey-ink);clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)}
@@ -625,10 +637,29 @@ footer{background:var(--surface);border-top:1px solid var(--line);padding-block:
 
   <section class="band" id="story">
     <div class="wrap story-grid">
-      <figure class="valley" style="margin:0">
-        <canvas id="valleyCanvas" aria-label="Illustration of beehives in a mountain valley" role="img"></canvas>
-        <figcaption>Gurez Valley · North Kashmir</figcaption>
-      </figure>
+      <div class="slider" id="storySlider" role="region" aria-roledescription="carousel" aria-label="Photos from our apiary">
+        <ul class="slides" id="storySlides" aria-live="off">
+          <li class="slide" role="group" aria-roledescription="slide" aria-label="1 of 4">
+            <img src="img/story-1.webp" srcset="img/story-1-640.webp 640w, img/story-1.webp 960w" sizes="(max-width:860px) 100vw, 560px" alt="Our hives in a mountain valley in Kashmir" width="960" height="1200" loading="lazy" decoding="async">
+            <span class="cap">Our apiary, Kashmir</span>
+          </li>
+          <li class="slide" role="group" aria-roledescription="slide" aria-label="2 of 4">
+            <img src="img/story-2.webp" srcset="img/story-2-640.webp 640w, img/story-2.webp 960w" sizes="(max-width:860px) 100vw, 560px" alt="Rows of beehives along the apiary fence" width="960" height="1200" fetchpriority="low" loading="lazy" decoding="async">
+            <span class="cap">Hives lined up for the season</span>
+          </li>
+          <li class="slide" role="group" aria-roledescription="slide" aria-label="3 of 4">
+            <img src="img/story-3.webp" srcset="img/story-3-640.webp 640w, img/story-3.webp 960w" sizes="(max-width:860px) 100vw, 560px" alt="Honey bees crowding the entrance of one of our hives" width="960" height="1200" fetchpriority="low" loading="lazy" decoding="async">
+            <span class="cap">Bees at the hive entrance</span>
+          </li>
+          <li class="slide" role="group" aria-roledescription="slide" aria-label="4 of 4">
+            <img src="img/story-4.webp" srcset="img/story-4-640.webp 640w, img/story-4.webp 960w" sizes="(max-width:860px) 100vw, 560px" alt="Our apiary under a wide Kashmir sky, with hives in rows and mountains behind" width="960" height="1200" fetchpriority="low" loading="lazy" decoding="async">
+            <span class="cap">The apiary in autumn</span>
+          </li>
+        </ul>
+        <button type="button" class="sl-btn sl-prev" data-slidenav="-1" aria-label="Previous photo"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <button type="button" class="sl-btn sl-next" data-slidenav="1" aria-label="Next photo"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg></button>
+        <div class="sl-dots" role="tablist" aria-label="Choose photo"><button type="button" role="tab" aria-label="Show photo 1" aria-selected="true" data-slide="0"></button><button type="button" role="tab" aria-label="Show photo 2" aria-selected="false" data-slide="1"></button><button type="button" role="tab" aria-label="Show photo 3" aria-selected="false" data-slide="2"></button><button type="button" role="tab" aria-label="Show photo 4" aria-selected="false" data-slide="3"></button></div>
+      </div>
       <div>
         <p class="eyebrow">Our story</p>
         <h2>A family apiary, not a bottling plant</h2>
@@ -1606,8 +1637,38 @@ async function copy(text){
   catch(e){ toast(text); }
 }
 
+/* ---------- story photo slideshow: moves every 5 s, swipe or tap arrows/dots to move it yourself ---------- */
+(function storySlider(){
+  const root = $("#storySlider"); if (!root) return;
+  const track = $("#storySlides"), dots = [...root.querySelectorAll("[data-slide]")], n = dots.length;
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let idx = 0, timer = null, paused = false, visible = true;
+  const go = i => { idx = (i + n) % n; track.scrollTo({ left: idx * track.clientWidth, behavior: reduce ? "auto" : "smooth" }); };
+  const mark = () => dots.forEach((d, k) => d.setAttribute("aria-selected", k === idx));
+  const stop = () => { clearInterval(timer); timer = null; };
+  const start = () => { stop(); if (!reduce && !paused && visible && !document.hidden) timer = setInterval(() => go(idx + 1), 5000); };
+  let st; track.addEventListener("scroll", () => { clearTimeout(st); st = setTimeout(() => { idx = Math.round(track.scrollLeft / track.clientWidth); mark(); }, 60); }, { passive: true });
+  root.addEventListener("click", e => {
+    const b = e.target.closest("[data-slidenav],[data-slide]"); if (!b) return;
+    go(b.dataset.slide !== undefined ? +b.dataset.slide : idx + +b.dataset.slidenav); start(); // restart the timer after a manual move
+  });
+  // Pause while a mouse hovers or the keyboard is inside; touch taps keep it playing.
+  root.addEventListener("pointerenter", e => { if (e.pointerType === "mouse") { paused = true; stop(); } });
+  root.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") { paused = false; start(); } });
+  root.addEventListener("focusin", e => { if (e.target.matches(":focus-visible")) { paused = true; stop(); } });
+  root.addEventListener("focusout", () => { if (!root.matches(":hover")) { paused = false; start(); } });
+  track.addEventListener("touchstart", () => { stop(); }, { passive: true });
+  track.addEventListener("touchend", () => { setTimeout(start, 400); }, { passive: true });
+  root.addEventListener("keydown", e => { if (e.key === "ArrowLeft") { go(idx - 1); e.preventDefault(); } if (e.key === "ArrowRight") { go(idx + 1); e.preventDefault(); } });
+  if ("IntersectionObserver" in window) new IntersectionObserver(es => { visible = es[0].isIntersecting; visible ? start() : stop(); }, { threshold: .3 }).observe(root);
+  document.addEventListener("visibilitychange", () => document.hidden ? stop() : start());
+  addEventListener("resize", () => track.scrollTo({ left: idx * track.clientWidth, behavior: "auto" }));
+  start();
+})();
+
 /* ---------- valley canvas ---------- */
 function drawValley(){
+  if (!$("#valleyCanvas")) return;
   const c = $("#valleyCanvas"), r = c.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio||1);
   if (!r.width) return;
   c.width = r.width*dpr; c.height = r.height*dpr; const g = c.getContext("2d"); g.scale(dpr,dpr);
