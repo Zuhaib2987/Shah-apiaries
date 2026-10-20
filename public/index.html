@@ -120,6 +120,27 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;backgroun
 .upsell-price{font-weight:600;font-size:1.1rem}
 .upsell-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
 @media (max-width:480px){.upsell{grid-template-columns:1fr;text-align:center}.upsell .upsell-art .jar{max-width:220px}.upsell-btns{justify-content:center}}
+.about .shead{margin-bottom:24px}
+.owner{display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:clamp(18px,3vw,32px)}
+.owner-photo{width:clamp(96px,14vw,150px);aspect-ratio:1;border-radius:50%;background:var(--honey-soft);border:3px solid var(--honey);display:grid;place-items:center;overflow:hidden}
+.owner-photo img{width:100%;height:100%;object-fit:cover}
+.owner-photo span{font-family:var(--f-display);font-style:italic;font-size:clamp(2rem,4vw,3rem);color:var(--honey-ink)}
+.owner-txt{display:grid;gap:6px;min-width:0}
+.owner-txt h3{font-size:clamp(1.6rem,3vw,2.1rem)}
+.owner-role{color:var(--muted);font-size:.95rem}
+.owner-bio{display:grid;gap:10px;margin-top:8px;max-width:65ch}
+.owner-bio:empty{display:none}
+.owner-todo{margin-top:10px;border:1.5px dashed var(--line);border-radius:12px;padding:16px;color:var(--muted);font-size:.92rem;min-height:120px;background:var(--sunk)}
+.recog{display:grid;grid-template-columns:1fr 1.1fr;gap:32px;align-items:center;margin-top:28px}
+.recog > *{min-width:0}
+.recog-meta{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:14px 0 0;font-size:.9rem}
+.recog-meta dt{color:var(--muted)}
+.recog-meta dd{margin:0;overflow-wrap:anywhere}
+.cert{display:block;position:relative;border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);background:#fff;text-decoration:none}
+.cert img{display:block;width:100%;height:auto}
+.cert-tap{position:absolute;right:10px;bottom:10px;background:rgba(30,30,30,.75);color:#fff;font-size:.75rem;padding:4px 10px;border-radius:999px}
+@media (max-width:860px){.recog{grid-template-columns:1fr}.recog .cert{order:-1}}
+@media (max-width:520px){.owner{grid-template-columns:1fr;justify-items:center;text-align:center}.owner-txt{justify-items:center}}
 .raw-types li{display:grid;justify-items:center;gap:2px;color:var(--honey-ink)}
 .raw-types li span{font-size:.72rem;color:var(--muted)}
 @media (max-width:600px){.hero-facts{display:grid;grid-template-columns:.85fr .95fr 1.5fr;gap:8px;align-items:start}.hero-facts b{font-size:1.2rem}.hero-facts span{font-size:.76rem}.raw-types{gap:2px;min-width:0}.raw-types svg{width:18px;height:18px}.raw-types li span{font-size:.6rem;margin-top:2px}}
@@ -675,6 +696,39 @@ footer{background:var(--surface);border-top:1px solid var(--line);padding-block:
     </div>
   </section>
 
+  <section class="band about" id="about" style="background:var(--sunk);border-block:1px solid var(--line)">
+    <div class="wrap">
+      <div class="shead"><div><p class="eyebrow">About us</p><h2>The people behind the hives</h2></div></div>
+
+      <div class="owner">
+        <div class="owner-photo" aria-hidden="true"><span>GS</span></div>
+        <div class="owner-txt">
+          <p class="eyebrow">The owner</p>
+          <h3>Gulam Mohi Ud Din Shah</h3>
+          <p class="owner-role">Owner and proprietor, Shah Apiaries™</p>
+          <!-- OWNER STORY: write a few short paragraphs here (how he started beekeeping, years of experience, what he cares about). -->
+          <div class="owner-bio" id="ownerBio"></div>
+          <p class="owner-todo" data-placeholder>Space for Gulam Mohi Ud Din Shah's story: how he started keeping bees, his years with the colonies, and what Shah Apiaries™ means to the family. Shown only while the shop is in preview.</p>
+        </div>
+      </div>
+
+      <div class="recog">
+        <div><p class="eyebrow">Recognition</p><h3>Registered for scientific beekeeping</h3>
+          <p class="muted" style="margin-top:8px">Shah Apiaries™ holds a Certificate of Registration from the Department of Agriculture and Farmers Welfare, Government of the UT of Jammu &amp; Kashmir, Lalmandi, Srinagar, for following scientific beekeeping practices. It recognises our compliance with the department's norms for sustainable and scientific beekeeping.</p>
+          <dl class="recog-meta">
+            <dt>Issued by</dt><dd>Department of Agriculture and Farmers Welfare, Kashmir</dd>
+            <dt>Registration no.</dt><dd class="mono">AEA/DEV/TRG-Reg/2025-26/93</dd>
+            <dt>Year</dt><dd>2025-26</dd>
+          </dl>
+        </div>
+        <a class="cert" href="img/certificate-beekeeping.webp" target="_blank" rel="noopener" aria-label="Open the beekeeping registration certificate full size">
+          <img src="img/certificate-beekeeping-720.webp" srcset="img/certificate-beekeeping-720.webp 720w, img/certificate-beekeeping.webp 1320w" sizes="(max-width:860px) 100vw, 560px" alt="Certificate of Registration for Shah Apiaries from the Department of Agriculture and Farmers Welfare, Government of UT of Jammu and Kashmir, for scientific beekeeping practices" width="1320" height="978" loading="lazy" decoding="async">
+          <span class="cert-tap">Tap to view full size</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
   <section class="band" id="gifting" style="background:var(--honey-soft)">
     <div class="wrap gift-grid">
       <div>
@@ -782,7 +836,7 @@ footer{background:var(--surface);border-top:1px solid var(--line);padding-block:
       </div>
       <div><h4>Shop</h4><ul><li><a href="#shop">All honey</a></li><li><button class="link" data-add="trio">Valley Trio gift box</button></li><li><a href="#lab">Lab reports</a></li><li><button class="link" data-open="orders">Track my order</button></li></ul></div>
       <div><h4>Help</h4><ul><li><a href="/shipping-policy" data-policy="shipping">Shipping policy</a></li><li><a href="/refund-policy" data-policy="refund">Refunds &amp; cancellations</a></li><li><a href="/privacy" data-policy="privacy">Privacy policy</a></li><li><a href="/terms" data-policy="terms">Terms &amp; conditions</a></li><li><a href="/contact" data-policy="contact">Contact &amp; grievances</a></li></ul></div>
-      <div><h4>Follow</h4><ul><li><a href="https://www.instagram.com/shahapiaries/" target="_blank" rel="noopener">Instagram @shahapiaries</a></li><li><a href="#faq">FAQs</a></li><li><a href="#story">Our story</a></li></ul></div>
+      <div><h4>Follow</h4><ul><li><a href="https://www.instagram.com/shahapiaries/" target="_blank" rel="noopener">Instagram @shahapiaries</a></li><li><a href="#faq">FAQs</a></li><li><a href="#story">Our story</a></li><li><a href="#about">About us</a></li></ul></div>
     </div>
     <div class="legal">
       <span style="display:grid;gap:4px"><span>© <span id="yr"></span> Shah Apiaries™. All rights reserved.</span><span>Packed in Srinagar, Kashmir.</span></span>
@@ -812,6 +866,7 @@ footer{background:var(--surface);border-top:1px solid var(--line);padding-block:
     <li><button data-go="#gifting">Wedding &amp; corporate gifts</button></li>
     <li><button data-guide="g-top">Kashmiri Honey Guide</button></li>
     <li><button data-go="#story">Our story</button></li>
+    <li><button data-go="#about">About us</button></li>
     <li><button data-go="#recipes">Recipes</button></li>
     <li><button data-go="#faq">FAQs</button></li>
     <li><button data-go="#contact">Contact</button></li>
@@ -1009,6 +1064,8 @@ function comb(c){
 }
 
 /* ---------- ratings ---------- */
+// Owner's story for the About us section: add paragraphs here, e.g. ["He started with two hives in 1990...", "..."]
+const OWNER_BIO = [];
 const allReviews = () => [...REAL_REVIEWS.map(r=>({...r,sample:false})), ...(CONFIG.demoMode ? SAMPLE_REVIEWS.map(r=>({...r,sample:true})) : [])];
 function rating(pid){
   const rs = allReviews().filter(r => r.product === pid);
@@ -1786,6 +1843,8 @@ function boot(){
   if (CONFIG.soldThisMonth > 0){ $("#soldFact").hidden=false; $("#soldNum").textContent = CONFIG.soldThisMonth.toLocaleString("en-IN"); }
   $("#batchSamples").innerHTML = Object.keys(LAB_REPORTS).map(k=>`<button data-batch="${k}">${k}</button>`).join(" · ");
   $("#recipeList").innerHTML = RECIPES.map(r=>`<article class="recipe"><span class="meta">${esc(r.time)} · serves ${esc(r.serves)}</span><h3>${esc(r.title)}</h3><ol>${r.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol><p class="uses">Made with <button data-view="${r.product}">${esc(P(r.product).name)}</button></p><a class="share" style="align-self:flex-start" href="${shareLink(`${r.title}: ${r.steps.join(" ")} Recipe from Shah Apiaries™ ${CONFIG.siteUrl}`)}" target="_blank" rel="noopener">${WA_ICON}Share</a></article>`).join("");
+  $("#ownerBio").innerHTML = OWNER_BIO.map(t=>`<p>${esc(t)}</p>`).join("");
+  if (OWNER_BIO.length || !CONFIG.demoMode) document.querySelectorAll("[data-placeholder]").forEach(el => el.hidden = true);
   $("#faqList").innerHTML = FAQ.map(([q,a])=>`<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join("");
   $("#mailTxt").textContent = CONFIG.email;
   $("#phoneTxt").textContent = CONFIG.whatsapp ? "+" + CONFIG.whatsapp : "number coming soon";
