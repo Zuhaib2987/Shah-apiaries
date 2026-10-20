@@ -54,7 +54,7 @@ def page(slug, title, eyebrow, intro, summary, sections):
   {f'<nav class="toc" aria-label="On this page"><b>On this page</b><ol>{toc}</ol></nav>' if len(sections)>3 else ""}
   {body}
 </main>
-<footer><div class="in">{nav}<p class="legal">© <span data-year>2026</span> {BIZ}. All rights reserved. FSSAI Reg. No. {FSSAI}.</p></div></footer>
+<footer><div class="in">{nav}<p class="legal">© <span data-year>2026</span> {BIZ}. All rights reserved. fssai Reg. No. {FSSAI}.</p></div></footer>
 <script src="/legal.js" defer></script>
 </body>
 </html>
@@ -154,7 +154,7 @@ f'''<p>These terms apply when you use shahapiaries.in or buy from {BIZ}. By usin
 <li>Honey is a natural food: colour, taste and texture vary, and crystallisation is normal.</li>
 <li>Never give honey to babies under 12 months.</li></ul>''',
 [
-("seller","1. About us", f'''<p>The seller is {BIZ}, a sole proprietorship of {OWNER}, at {ADDR}. FSSAI Reg. No. {FSSAI}. "Shah Apiaries" and the chinar-and-honeycomb logo are trademarks of {TM_OWNER}, used by {BIZ} with permission.</p>{CONTACT_CARD}'''),
+("seller","1. About us", f'''<p>The seller is {BIZ}, a sole proprietorship of {OWNER}, at {ADDR}. fssai Reg. No. {FSSAI}. "Shah Apiaries" and the chinar-and-honeycomb logo are trademarks of {TM_OWNER}, used by {BIZ} with permission.</p>{CONTACT_CARD}'''),
 ("eligibility","2. Who can order", '''<ul>
 <li>You must be 18 or older and able to enter a binding contract under Indian law, or order with a parent or guardian's consent.</li>
 <li>We currently deliver within India only.</li>
@@ -297,7 +297,7 @@ f'''<p>Every order is packed by hand in Srinagar and sent with a tracked courier
 page("contact", "Contact &amp; grievances", "Talk to us",
 f'''<p>We are a small family business and read every message ourselves.</p>''', "",
 [
-("details","Business details", f'''<div class="card"><p><b>{BIZ}</b><br>Sole proprietorship of {OWNER}<br>{ADDR}<br>Email: <a href="mailto:{EMAIL}">{EMAIL}</a><br>Instagram: <a href="https://www.instagram.com/shahapiaries/" rel="noopener" target="_blank">@shahapiaries</a><br>FSSAI Reg. No. {FSSAI}</p></div>
+("details","Business details", f'''<div class="card"><p><b>{BIZ}</b><br>Sole proprietorship of {OWNER}<br>{ADDR}<br>Email: <a href="mailto:{EMAIL}">{EMAIL}</a><br>Instagram: <a href="https://www.instagram.com/shahapiaries/" rel="noopener" target="_blank">@shahapiaries</a><br>fssai Reg. No. {FSSAI}</p></div>
 <p>For order questions, please include your order number (it starts with SA-).</p>'''),
 ("grievance","Grievance Officer", f'''<p>As required by the Consumer Protection (E-Commerce) Rules, 2020 and the Digital Personal Data Protection Act, 2023:</p>
 <div class="card"><p><b>{GRIEVANCE}</b>, Grievance Officer<br>{BIZ}, {ADDR}<br>Email: <a href="mailto:{EMAIL}">{EMAIL}</a></p></div>

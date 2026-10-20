@@ -930,7 +930,7 @@ const CONFIG = {
   whatsapp: "",                 // Business WhatsApp with country code, digits only, e.g. "919XXXXXXXXX". Orders open WhatsApp with this number.
   email: "ShahApiaries@gmail.com",
   instagram: "https://www.instagram.com/shahapiaries/",
-  fssai: "FSSAI Reg. No. 21026414000454",
+  fssai: "fssai Reg. No. 21026414000454",
   freeShippingAbove: 999,       // ₹
   shippingFee: 80,              // ₹ below free-shipping threshold
   codFee: 40,                   // ₹ extra for cash on delivery
@@ -988,6 +988,10 @@ const PRODUCTS = [
     season:"Current harvest", use:"First-time buyers, return gifts, tasting with family",
     variants:[{id:"set", label:"3 × 100 g", price:549, mrp:599, stock:true}] }
 ];
+
+/* Lab analysis reports (FSSAI Form C) shown on each product page, as online food sellers must.
+   Put the PDF in public/reports/ and add its path, e.g. acacia:"/reports/acacia-2026.pdf". */
+const REPORTS = { acacia:"", sulai:"", multiflora:"", comb:"", trio:"", minis:"" };
 
 /* Honey colour grades (Pfund scale names). Each honey's pfund value above is its index here. */
 const PFUND = [["Water white","#FDF8E1"],["Extra white","#F9EDB8"],["White","#F5E08A"],["Extra light amber","#EFC75B"],["Light amber","#DFA531"],["Amber","#B8711A"],["Dark amber","#6E3A10"]];
@@ -1211,15 +1215,17 @@ function renderProduct(){
       <div><a class="share" href="${shareLink(`${p.name} from Shah Apiaries™, raw honey from Kashmir: ${CONFIG.siteUrl}`)}" target="_blank" rel="noopener">${WA_ICON}Share on WhatsApp</a></div>
       <div class="pd-tabs">
         <details open><summary>Tasting &amp; uses</summary><p>${esc(p.use)}. Raw honey may crystallise; this is natural.</p></details>
-        <details><summary>Ingredients &amp; storage</summary><p>${p.comb ? "100% raw honey in natural beeswax comb. The wax is edible. No added sugar, no preservatives. Keep the box closed at room temperature, away from sunlight. Do not refrigerate. Some honey may leak from cut cells, which is natural. Not for infants under 12 months." : `100% honey${p.id==="trio"?" (three varieties)":""}. No added sugar, no preservatives. Store closed, at room temperature, away from sunlight. Use a dry spoon. Not for infants under 12 months.`}</p></details>
+        <details><summary>Ingredients &amp; storage</summary><p>${p.comb ? "Ingredients: honey in natural beeswax comb. The wax is edible. No added sugar, no preservatives. Keep the box closed at room temperature, away from sunlight. Do not refrigerate. Some honey may leak from cut cells, which is natural. Not for infants under 12 months." : `Ingredients: honey${p.id==="trio"?" (three varieties)":""}. No added sugar, no preservatives. Store closed, at room temperature, away from sunlight. Use a dry spoon. Not for infants under 12 months.`}</p></details>
         <details><summary>Product details</summary><dl class="pd-legal">
           <dt>Net quantity</dt><dd>${esc(v.label)}</dd>
           <dt>MRP</dt><dd>${inr(v.mrp||v.price)} (inclusive of all taxes)</dd>
           ${unitSale(v)?`<dt>Unit sale price</dt><dd>${unitSale(v)}</dd>`:""}
           <dt>Packed by</dt><dd>Shah Apiaries™, Babapora, Zoonimar, Srinagar, Jammu &amp; Kashmir</dd>
-          <dt>FSSAI</dt><dd class="mono">${esc(CONFIG.fssai.replace(/^FSSAI\s*/,""))}</dd>
+          <dt>fssai</dt><dd class="mono">${esc(CONFIG.fssai.replace(/^fssai\s*/i,""))}</dd>
           <dt>Country of origin</dt><dd>India</dd>
-          <dt>Packing date</dt><dd>Printed on the jar with the batch code</dd>
+          ${REPORTS[p.id] ? `<dt>Analysis report</dt><dd><a href="${esc(REPORTS[p.id])}" target="_blank" rel="noopener">View lab report (Form C)</a></dd>` : ""}
+          <dt>Date of packing</dt><dd>Printed on the ${p.comb?"box":"jar"} with the batch code</dd>
+          <dt>Best before</dt><dd>18 months from the date of packing</dd>
           <dt>Customer care</dt><dd>${esc(CONFIG.email)}${CONFIG.whatsapp?` · +${esc(CONFIG.whatsapp)}`:""}</dd>
         </dl></details>
         <details><summary>Shipping &amp; returns</summary><p>Dispatched from Srinagar in 1 to 2 working days. Free shipping above ${inr(CONFIG.freeShippingAbove)}. Broken jars replaced free when you send an unboxing video within 24 hours of delivery.</p></details>
@@ -1374,12 +1380,12 @@ const GUIDE = `
 
   <h3 id="g-label">How to read a honey label</h3>
   <ol>
-    <li><b>The name.</b> It should say "Honey". Words like "honey blend" or "honey flavoured" mean it is not pure honey.</li>
-    <li><b>FSSAI logo and 14-digit licence number.</b> Every food business must show it.</li>
+    <li><b>The name.</b> It should say "Honey". Words like "honey blend" or "honey flavoured" mean it is not honey.</li>
+    <li><b>fssai logo and 14-digit registration or licence number.</b> Every food business must show it, in the format "fssai Reg. No." or "fssai Lic. No.".</li>
     <li><b>Manufacturer's name and full address.</b> You should know who packed it and where.</li>
     <li><b>Batch or lot number.</b> Lets you trace the jar. Our jars also carry a hand-written jar number, like 233/500. Enter both on this site to see the lab report.</li>
-    <li><b>Date of packing and best before.</b></li>
-    <li><b>Net quantity and MRP</b>, inclusive of taxes.</li>
+    <li><b>Date of packing and best before.</b> For honey this is usually 18 months, and never more than 2 years, from packing. Be wary of claims like "best before 10 years".</li>
+    <li><b>Net quantity, MRP inclusive of all taxes, and unit sale price</b>, such as "₹1.60 per g".</li>
     <li><b>Floral source.</b> A label naming one flower, like acacia, should be backed by pollen testing.</li>
   </ol>
 
