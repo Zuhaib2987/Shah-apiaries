@@ -110,6 +110,10 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;backgroun
 .hero-facts div{min-width:0}
 .hero-facts b{display:block;font-family:var(--f-display);font-style:italic;font-weight:400;font-size:1.7rem}
 .hero-facts span{font-size:.85rem;color:var(--muted)}
+.raw-types{list-style:none;margin:4px 0 0;padding:0;display:flex;gap:12px}
+.raw-types li{display:grid;justify-items:center;gap:2px;color:var(--honey-ink)}
+.raw-types li span{font-size:.72rem;color:var(--muted)}
+@media (max-width:600px){.hero-facts{display:grid;grid-template-columns:.75fr 1fr 1.35fr;gap:12px;align-items:start}.hero-facts b{font-size:1.2rem}.hero-facts span{font-size:.76rem}.raw-types{gap:6px}.raw-types svg{width:18px;height:18px}.raw-types li span{font-size:.64rem}}
 .shelf{display:flex;justify-content:center;align-items:flex-end;gap:clamp(6px,2vw,18px);padding:20px 0 0;position:relative}
 .shelf::after{content:"";position:absolute;left:4%;right:4%;bottom:-6px;height:14px;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.18),transparent)}
 .shelf .jar{width:clamp(92px,13vw,150px)}
@@ -491,6 +495,11 @@ footer{background:var(--surface);border-top:1px solid var(--line);padding-block:
         <div class="hero-facts">
           <div><b>3</b><span>single-origin honeys</span></div>
           <div><b class="mono" style="font-family:var(--f-display)">2,400 m</b><span>Gurez Valley altitude</span></div>
+          <div class="raw-fact"><b>Unprocessed</b><ul class="raw-types" aria-label="How our honey is kept natural">
+            <li><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3.5 11.5 5.5v4L8 11.5 4.5 9.5v-4zM16 3.5l3.5 2v4l-3.5 2-3.5-2v-4zM12 10.5l3.5 2v4L12 18.5l-3.5-2v-4z"/><path d="M12 18.5v2.5" /></svg><span>Raw</span></li>
+            <li><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c1 3 4.5 4.8 4.5 9a4.5 4.5 0 0 1-9 0c0-2 1-3.4 2-4.4.3 1.6 1.2 2.4 2 2.4C11 8 11.5 5.5 12 3z"/><path d="M4 4l16 16" stroke-width="1.8"/></svg><span>Unheated</span></li>
+            <li><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5c3 4 5.5 7 5.5 10a5.5 5.5 0 0 1-11 0c0-3 2.5-6 5.5-10z"/><path d="M9.5 14a2.5 2.5 0 0 0 2.5 2.5"/></svg><span>Unblended</span></li>
+          </ul></div>
           <div id="soldFact" hidden><b id="soldNum">0</b><span>jars sold this month</span></div>
         </div>
       </div>
