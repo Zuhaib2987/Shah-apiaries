@@ -451,6 +451,9 @@ footer{background:var(--surface);border-top:1px solid var(--line);padding-block:
 .exit .code{font-family:var(--f-mono);font-size:1.5rem;letter-spacing:.12em;border:2px dashed var(--honey);border-radius:12px;padding:12px;background:var(--honey-soft);color:var(--honey-ink)}
 .policy h4{margin:18px 0 6px;font-size:1rem}
 .policy p,.policy li{color:var(--muted);font-size:.93rem}
+.pd-legal{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-size:.9rem}
+.pd-legal dt{color:var(--muted)}
+.pd-legal dd{margin:0;min-width:0;overflow-wrap:anywhere}
 .tm{font-size:.5em;vertical-align:top;position:relative;top:.35em;margin-left:2px;font-style:normal;font-family:var(--f-body,system-ui),sans-serif;font-weight:400;line-height:1;letter-spacing:0}
 </style>
 
@@ -805,7 +808,7 @@ const CONFIG = {
   whatsapp: "",                 // Business WhatsApp with country code, digits only, e.g. "919XXXXXXXXX". Orders open WhatsApp with this number.
   email: "ShahApiaries@gmail.com",
   instagram: "https://www.instagram.com/shahapiaries/",
-  fssai: "FSSAI Lic. No.: applied, number shown here once issued",
+  fssai: "FSSAI Reg. No. 21026414000454",
   freeShippingAbove: 999,       // ₹
   shippingFee: 80,              // ₹ below free-shipping threshold
   codFee: 40,                   // ₹ extra for cash on delivery
@@ -1049,6 +1052,15 @@ function renderProduct(){
       <div class="pd-tabs">
         <details open><summary>Tasting &amp; uses</summary><p>${esc(p.use)}. Raw honey may crystallise; this is natural.</p></details>
         <details><summary>Ingredients &amp; storage</summary><p>100% honey${p.id==="trio"?" (three varieties)":""}. No added sugar, no preservatives. Store closed, at room temperature, away from sunlight. Use a dry spoon. Not for infants under 12 months.</p></details>
+        <details><summary>Product details</summary><dl class="pd-legal">
+          <dt>Net quantity</dt><dd>${esc(v.label)}</dd>
+          <dt>MRP</dt><dd>${inr(v.mrp||v.price)} (inclusive of all taxes)</dd>
+          <dt>Packed by</dt><dd>Shah Apiaries™, Babapora, Zoonimar, Srinagar, Jammu &amp; Kashmir</dd>
+          <dt>FSSAI</dt><dd class="mono">${esc(CONFIG.fssai.replace(/^FSSAI\s*/,""))}</dd>
+          <dt>Country of origin</dt><dd>India</dd>
+          <dt>Packing date</dt><dd>Printed on the jar with the batch code</dd>
+          <dt>Customer care</dt><dd>${esc(CONFIG.email)}${CONFIG.whatsapp?` · +${esc(CONFIG.whatsapp)}`:""}</dd>
+        </dl></details>
         <details><summary>Shipping &amp; returns</summary><p>Dispatched from Srinagar in 1 to 2 working days. Free shipping above ${inr(CONFIG.freeShippingAbove)}. Broken jars replaced free with a photo within 48 hours.</p></details>
         <details><summary>Reviews (${reviews.length})</summary>${reviews.length?`<ul style="list-style:none;padding:0;display:grid;gap:10px">${reviews.map(r=>`<li><span class="stars">${"★".repeat(r.stars)}</span> ${esc(r.text)} <br><small>${esc(r.name)}, ${esc(r.city)} ${r.sample?'<span class="tag-sample">Sample</span>':""}</small></li>`).join("")}</ul>`:`<p>No reviews yet. Bought this? <button class="link" style="border:0;background:none;padding:0;text-decoration:underline;color:var(--honey-ink)" data-open="review">Write the first one</button>.</p>`}</details>
       </div>
