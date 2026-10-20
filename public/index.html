@@ -111,9 +111,10 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;backgroun
 .hero-facts b{display:block;font-family:var(--f-display);font-style:italic;font-weight:400;font-size:1.7rem}
 .hero-facts span{font-size:.85rem;color:var(--muted)}
 .raw-types{list-style:none;margin:4px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;min-width:200px}
+.raw-fact b{text-align:center}
 .raw-types li{display:grid;justify-items:center;gap:2px;color:var(--honey-ink)}
 .raw-types li span{font-size:.72rem;color:var(--muted)}
-@media (max-width:600px){.hero-facts{display:grid;grid-template-columns:.75fr 1fr 1.35fr;gap:12px;align-items:start}.hero-facts b{font-size:1.2rem}.hero-facts span{font-size:.76rem}.raw-types{gap:2px;min-width:0}.raw-types svg{width:18px;height:18px}.raw-types li span{font-size:.64rem}}
+@media (max-width:600px){.hero-facts{display:grid;grid-template-columns:.5fr .9fr 1.65fr;gap:10px;align-items:start}.hero-facts b{font-size:1.2rem}.hero-facts span{font-size:.76rem}.raw-types{gap:2px;min-width:0}.raw-types svg{width:18px;height:18px}.raw-types li span{font-size:.62rem}}
 .shelf{display:flex;justify-content:center;align-items:flex-end;gap:clamp(6px,2vw,18px);padding:20px 0 0;position:relative}
 .shelf::after{content:"";position:absolute;left:4%;right:4%;bottom:-6px;height:14px;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.18),transparent)}
 .shelf .jar{width:clamp(92px,13vw,150px)}
