@@ -997,6 +997,13 @@ function renderGrid(){
 
 /* ---------- product modal ---------- */
 let pdState = {};
+// Unit sale price on the MRP, as the packaged goods rules require: per g under 1 kg, per kg from 1 kg.
+function unitSale(v){
+  const m = String(v.label||"").match(/^(\d+(?:\.\d+)?)\s*(kg|g)$/i); if (!m) return "";
+  const grams = +m[1] * (m[2].toLowerCase()==="kg" ? 1000 : 1), mrp = v.mrp || v.price;
+  const f = n => "₹" + n.toLocaleString("en-IN", { minimumFractionDigits:2, maximumFractionDigits:2 });
+  return grams >= 1000 ? `${f(mrp/grams*1000)} per kg` : `${f(mrp/grams)} per g`;
+}
 function openProduct(pid){
   const p = P(pid); if (!p) return;
   const firstInStock = p.variants.find(v=>v.stock) || p.variants[0];
@@ -1030,6 +1037,7 @@ function renderProduct(){
       ${rating(p.id)}
       <p>${esc(p.notes)}</p>
       <div><p class="eyebrow" style="margin-bottom:8px">Size</p><div class="opts">${p.variants.map(x=>`<button class="opt ${x.stock?"":"oos"}" data-variant="${x.id}" aria-pressed="${x.id===v.id}"><b>${esc(x.label)}</b><small>${x.stock?inr(x.price):"Sold out"}</small></button>`).join("")}</div></div>
+      <p class="hint" style="margin:-6px 0 0">MRP ${inr(v.mrp||v.price)} (inclusive of all taxes)${unitSale(v)?` · ${unitSale(v)}`:""}</p>
       ${p.gift?"":`<div><p class="eyebrow" style="margin-bottom:8px">Purchase</p><div class="opts">
         <button class="opt" data-sub="0" aria-pressed="${!pdState.sub}"><b>One-time</b><small>${inr(v.price)}</small></button>
         <button class="opt" data-sub="1" aria-pressed="${pdState.sub}"><b>Every month</b><small>${inr(v.price*(1-CONFIG.subscribePct/100))}, save ${CONFIG.subscribePct}%</small></button></div></div>`}
@@ -1055,6 +1063,7 @@ function renderProduct(){
         <details><summary>Product details</summary><dl class="pd-legal">
           <dt>Net quantity</dt><dd>${esc(v.label)}</dd>
           <dt>MRP</dt><dd>${inr(v.mrp||v.price)} (inclusive of all taxes)</dd>
+          ${unitSale(v)?`<dt>Unit sale price</dt><dd>${unitSale(v)}</dd>`:""}
           <dt>Packed by</dt><dd>Shah Apiaries™, Babapora, Zoonimar, Srinagar, Jammu &amp; Kashmir</dd>
           <dt>FSSAI</dt><dd class="mono">${esc(CONFIG.fssai.replace(/^FSSAI\s*/,""))}</dd>
           <dt>Country of origin</dt><dd>India</dd>
@@ -1109,7 +1118,7 @@ function renderCart(){
     <div class="sumrow"><span>Subtotal</span><span>${inr(t.sub)}</span></div>
     ${t.disc?`<div class="sumrow" style="color:var(--ok)"><span>${esc(t.discLabel)}</span><span>−${inr(t.disc)}</span></div>`:""}
     <div class="sumrow"><span>Shipping</span><span>${t.ship?inr(t.ship):"Free"}</span></div>
-    <div class="sumrow total"><span>Total</span><span>${inr(t.total)}</span></div>
+    <div class="sumrow total"><span>Total <small class="muted" style="font-weight:400;font-size:.75rem">incl. of all taxes</small></span><span>${inr(t.total)}</span></div>
     <button class="btn btn-honey btn-block" data-checkout>Checkout</button>`;
 }
 function renderCounts(){
@@ -1336,7 +1345,7 @@ function updateCoSum(){
     ${t.disc?`<div class="sumrow" style="color:var(--ok)"><span>${esc(t.discLabel)}</span><span>−${inr(t.disc)}</span></div>`:""}
     <div class="sumrow"><span>Shipping</span><span>${t.ship?inr(t.ship):"Free"}</span></div>
     ${t.codFee?`<div class="sumrow"><span>COD fee</span><span>${inr(t.codFee)}</span></div>`:""}
-    <div class="sumrow total"><span>Total</span><span>${inr(t.total)}</span></div>
+    <div class="sumrow total"><span>Total <small class="muted" style="font-weight:400;font-size:.75rem">incl. of all taxes</small></span><span>${inr(t.total)}</span></div>
     ${cod && cart.length ? (() => { const pin = $("#coPin")?.value || "", adv = codAdvance(t.total, pin), known = /^[1-8]\d{5}$/.test(pin);
       return known ? `<div class="sumrow" style="color:var(--honey-ink)"><span><b>Pay now (${codPct(pin)}% advance)</b></span><b>${inr(adv)}</b></div><div class="sumrow"><span>Cash on delivery</span><span>${inr(t.total-adv)}</span></div>`
         : `<p class="hint" style="margin:0">Enter your PIN code to see the advance.</p>`; })() : ""}`;
