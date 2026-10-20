@@ -234,8 +234,11 @@ page("refund-policy", "Refunds &amp; cancellations", "If something goes wrong",
 <li><b>After dispatch:</b> the order can no longer be cancelled. You may refuse delivery, in which case the refund rules for refused orders below apply.</li>
 <li><b>Custom, bulk and gift orders</b> with personalised tags or notes can be cancelled for a full refund only before we start preparing them. After that, the advance covers materials already used.</li>
 <li>We may cancel an order ourselves, as described in our terms. If we do, you get a full refund.</li></ul>'''),
-("damaged","2. Damaged, leaking or wrong items", '''<ul>
-<li>Contact us within <b>48 hours of delivery</b> with your order number and a photo or, ideally, an unboxing video showing the problem and the shipping label.</li>
+("damaged","2. Damaged, leaking, wrong or missing items", '''<p><b>An unboxing video is mandatory for these claims.</b> Please record one every time you open a parcel from us:</p><ul>
+<li>Start recording <b>before the sealed parcel is opened</b>, with the shipping label and order number visible.</li>
+<li>Keep it as one continuous, unedited video until every jar is out and the problem is clearly shown.</li></ul>
+<p>Then:</p><ul>
+<li>Send the video with your order number on WhatsApp or email <b>within 24 hours of delivery</b>. Claims sent later, or without an unboxing video, cannot be accepted.</li>
 <li>If a jar arrived broken or leaking, or you received the wrong honey or size, we will send a free replacement or give a full refund for that item, whichever you prefer.</li>
 <li>If something is missing from your order, we will send it or refund it.</li>
 <li>You do not need to return a broken jar. For a wrong item, we may arrange a free pickup or ask you to keep it.</li></ul>'''),
@@ -244,7 +247,8 @@ page("refund-policy", "Refunds &amp; cancellations", "If something goes wrong",
 ("not","4. What we cannot refund", '''<ul>
 <li>Opened or partly used jars, unless the problem existed when it was delivered.</li>
 <li>Change of mind after dispatch.</li>
-<li>Problems reported after 48 hours (damage) or 7 days (quality) without a good reason.</li>
+<li>Damage, leakage, wrong item or missing item claims reported more than 24 hours after delivery, or without an unboxing video.</li>
+<li>Quality concerns reported more than 7 days after delivery.</li>
 <li>Damage caused after delivery, for example from wrong storage.</li></ul>'''),
 ("refused","5. Refused or undelivered orders", f'''<p>If a parcel comes back to us because delivery was refused, the address was wrong or incomplete, or you could not be reached after the courier's attempts:</p><ul>
 <li><b>Prepaid orders:</b> we refund the amount paid minus the actual shipping charges both ways, or reship it if you pay the shipping again.</li>
@@ -278,7 +282,8 @@ f'''<p>Every order is packed by hand in Srinagar and sent with a tracked courier
 ("address","5. Address and delivery", '''<ul>
 <li>Please give a full address with landmark, PIN code and a reachable mobile number. We are not responsible for delays or loss caused by an incomplete or wrong address.</li>
 <li>To change the address, message us before dispatch.</li>
-<li>Check the parcel at delivery. If the box is visibly damaged or wet, note it with the courier if you can and send us a photo.</li></ul>'''),
+<li>Check the parcel at delivery. If the box is visibly damaged or wet, note it with the courier if you can.</li>
+<li>Always record an unboxing video when you open the parcel. It is required for any damage, leakage, wrong or missing item claim, which must reach us within 24 hours of delivery.</li></ul>'''),
 ("problems","6. Delays, lost and damaged parcels", '''<ul>
 <li>If tracking has not moved for 5 working days, tell us and we will chase the courier.</li>
 <li>If a parcel is confirmed lost in transit, we will resend it or refund you in full.</li>
