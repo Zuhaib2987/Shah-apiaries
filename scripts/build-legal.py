@@ -7,7 +7,9 @@ LEAF = "M50 3 L52.5 8 L54.5 13 L57.5 13.5 L56.5 18 L58.5 24 L61.5 24.5 L60 29 L6
 COMB = "M33 64 41 68.6v9.2L33 82.4 25 77.8v-9.2zM50 64 58 68.6v9.2L50 82.4 42 77.8v-9.2zM67 64 75 68.6v9.2L67 82.4 59 77.8v-9.2zM41.5 49.5 49.5 54.1v9.2L41.5 67.9 33.5 63.3v-9.2zM58.5 49.5 66.5 54.1v9.2L58.5 67.9 50.5 63.3v-9.2zM50 35 58 39.6v9.2L50 53.4 42 48.8v-9.2z"
 
 BIZ = "Shah Apiaries™"
-OWNER = "Zuhaib Muzaffar Shah"
+OWNER = "Gulam Mohi Ud Din Shah"      # sole proprietor
+GRIEVANCE = "Hazik Shah"             # Grievance Officer
+TM_OWNER = "Zuhaib Muzaffar Shah"    # trademark applicant
 ADDR = "Babapora, Zoonimar, Srinagar, Jammu &amp; Kashmir, India"
 EMAIL = "ShahApiaries@gmail.com"
 FSSAI = "21026414000454"
@@ -60,7 +62,7 @@ def page(slug, title, eyebrow, intro, summary, sections):
     assert "—" not in doc, slug
     open(os.path.join(OUT, slug + ".html"), "w").write(doc)
 
-CONTACT_CARD = f'''<div class="card"><p><b>{BIZ}</b><br>Proprietor and Grievance Officer: {OWNER}<br>{ADDR}<br>Email: <a href="mailto:{EMAIL}">{EMAIL}</a></p></div>'''
+CONTACT_CARD = f'''<div class="card"><p><b>{BIZ}</b><br>Proprietor: {OWNER}<br>Grievance Officer: {GRIEVANCE}<br>{ADDR}<br>Email: <a href="mailto:{EMAIL}">{EMAIL}</a></p></div>'''
 
 # ---------------- PRIVACY ----------------
 page("privacy", "Privacy policy", "Your data",
@@ -152,7 +154,7 @@ f'''<p>These terms apply when you use shahapiaries.in or buy from {BIZ}. By usin
 <li>Honey is a natural food: colour, taste and texture vary, and crystallisation is normal.</li>
 <li>Never give honey to babies under 12 months.</li></ul>''',
 [
-("seller","1. About us", f'''<p>The seller is {BIZ}, a sole proprietorship of {OWNER}, at {ADDR}. FSSAI Reg. No. {FSSAI}. "Shah Apiaries" and the chinar-and-honeycomb logo are trademarks of the proprietor.</p>{CONTACT_CARD}'''),
+("seller","1. About us", f'''<p>The seller is {BIZ}, a sole proprietorship of {OWNER}, at {ADDR}. FSSAI Reg. No. {FSSAI}. "Shah Apiaries" and the chinar-and-honeycomb logo are trademarks of {TM_OWNER}, used by {BIZ} with permission.</p>{CONTACT_CARD}'''),
 ("eligibility","2. Who can order", '''<ul>
 <li>You must be 18 or older and able to enter a binding contract under Indian law, or order with a parent or guardian's consent.</li>
 <li>We currently deliver within India only.</li>
@@ -209,7 +211,7 @@ f'''<p>These terms apply when you use shahapiaries.in or buy from {BIZ}. By usin
 <li>Interfere with the site's security or operation, for example by hacking, scraping, overloading it or uploading malicious code.</li>
 <li>Copy, resell or reuse our content or products' branding without written permission.</li></ul>
 <p>We may block access for anyone who breaks these rules.</p>'''),
-("ip","13. Intellectual property", f'''<p>"Shah Apiaries", our logo, label designs, jar numbering design, website, text, illustrations and photos belong to {OWNER} / {BIZ} and are protected by Indian trademark and copyright law. You may share links to our pages, but you may not use our name or branding in a way that suggests we endorse you, or resell our honey in repackaged form under our name.</p>'''),
+("ip","13. Intellectual property", f'''<p>"Shah Apiaries", our logo, label designs, jar numbering design, website, text, illustrations and photos belong to {TM_OWNER} and {BIZ} and are protected by Indian trademark and copyright law. You may share links to our pages, but you may not use our name or branding in a way that suggests we endorse you, or resell our honey in repackaged form under our name.</p>'''),
 ("liability","14. Limitation of liability", '''<ul>
 <li>We are responsible for supplying honey that matches its description and meets FSSAI standards, and for refunds or replacements under our policies.</li>
 <li>To the extent the law allows, our total liability for any order is limited to the amount you paid for it. We are not liable for indirect or consequential losses, such as loss of profit or business, or for problems caused by misuse, wrong storage, or ignoring the health and safety notes above.</li>
@@ -298,7 +300,7 @@ f'''<p>We are a small family business and read every message ourselves.</p>''', 
 ("details","Business details", f'''<div class="card"><p><b>{BIZ}</b><br>Sole proprietorship of {OWNER}<br>{ADDR}<br>Email: <a href="mailto:{EMAIL}">{EMAIL}</a><br>Instagram: <a href="https://www.instagram.com/shahapiaries/" rel="noopener" target="_blank">@shahapiaries</a><br>FSSAI Reg. No. {FSSAI}</p></div>
 <p>For order questions, please include your order number (it starts with SA-).</p>'''),
 ("grievance","Grievance Officer", f'''<p>As required by the Consumer Protection (E-Commerce) Rules, 2020 and the Digital Personal Data Protection Act, 2023:</p>
-<div class="card"><p><b>{OWNER}</b>, Grievance Officer<br>{BIZ}, {ADDR}<br>Email: <a href="mailto:{EMAIL}">{EMAIL}</a></p></div>
+<div class="card"><p><b>{GRIEVANCE}</b>, Grievance Officer<br>{BIZ}, {ADDR}<br>Email: <a href="mailto:{EMAIL}">{EMAIL}</a></p></div>
 <p>We acknowledge every complaint within 48 hours and resolve it within one month. If you are not satisfied, you can contact the National Consumer Helpline on 1915 or at <a href="https://consumerhelpline.gov.in" rel="noopener" target="_blank">consumerhelpline.gov.in</a>.</p>'''),
 ("policies","Our policies", '''<ul><li><a href="/terms">Terms &amp; conditions</a></li><li><a href="/privacy">Privacy policy</a></li><li><a href="/refund-policy">Refunds &amp; cancellations</a></li><li><a href="/shipping-policy">Shipping policy</a></li></ul>'''),
 ])
