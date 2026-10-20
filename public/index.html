@@ -587,6 +587,7 @@ footer{background:var(--surface);border-top:1px solid var(--line);padding-block:
         <button class="chip" data-filter="all" aria-pressed="true">All</button>
         <button class="chip" data-filter="mild" aria-pressed="false">Light &amp; mild</button>
         <button class="chip" data-filter="bold" aria-pressed="false">Rich &amp; bold</button>
+        <button class="chip" data-filter="comb" aria-pressed="false">Honeycomb</button>
         <button class="chip" data-filter="gift" aria-pressed="false">Gift boxes</button>
       </div>
       <div class="grid" id="grid"></div>
@@ -968,6 +969,12 @@ const PRODUCTS = [
     notes:"Rich, malty and complex, with herbal notes from mountain wildflowers. Flavour changes slightly with every harvest.",
     season:"Harvested July to August", use:"Porridge, dressings, marinades", level:4, pfund:5,
     variants:[{id:"500", label:"500 g", price:649, mrp:699, stock:true},{id:"1kg", label:"1 kg", price:1249, mrp:1398, stock:true}] },
+  { id:"comb", sampleNo:18, name:"Raw Honeycomb", color:"#E6A92A", taste:"comb", badge:"Straight from the hive", comb:true,
+    source:"Cut whole from our frames, Kashmir",
+    short:"Honey still sealed in the hexagonal beeswax cells the bees built.",
+    notes:"The purest way to eat honey: nothing extracted, strained or heated. Each piece is cut by hand from a capped frame, so the honey is exactly as the bees stored it. The wax is edible and chews like a soft, honey-filled gum.",
+    season:"Seasonal, limited", use:"Cheese boards, warm toast, pancakes, or a piece by itself",
+    variants:[{id:"250", label:"250 g", price:649, mrp:699, stock:true},{id:"500", label:"500 g", price:1199, mrp:1299, stock:true}] },
   { id:"trio", sampleNo:1, name:"The Valley Trio", color:"#E2A11B", taste:"gift", badge:"Gift box", gift:true,
     source:"Acacia, Sulai and Gurez multi-floral",
     short:"Three 500 g jars in a gift box with a tasting card.",
@@ -1053,7 +1060,29 @@ let promo = store.get("promo", null); // { code, pct } once the server has confi
 
 /* ---------- jar art ---------- */
 let jarN = 0;
+/* Comb honey: a cut piece of capped honeycomb in a clear box */
+function combBox(p){
+  const n = ++jarN; let cells = "";
+  for (let r=0;r<5;r++) for (let q=0;q<5;q++){
+    const x = 31 + q*14.5 + (r%2)*7.25, y = 66 + r*12.5;
+    if (x > 100) continue;
+    cells += `<path d="M${x} ${y-8}l7.25 4.2v8.4L${x} ${y+8.8}l-7.25-4.2v-8.4z" fill="url(#cg${n})" stroke="#F7DE8E" stroke-width="1.2"/>`;
+  }
+  return `<svg class="jar" viewBox="0 0 120 150" aria-hidden="true">
+    <defs><linearGradient id="cg${n}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F6C453"/><stop offset="1" stop-color="${p.color}"/></linearGradient>
+    <clipPath id="cc${n}"><rect x="20" y="56" width="80" height="66" rx="6"/></clipPath></defs>
+    <rect x="12" y="40" width="96" height="94" rx="10" fill="#FFFFFF" fill-opacity=".45" stroke="#C9CFC3" stroke-width="1.5"/>
+    <rect x="10" y="34" width="100" height="12" rx="5" fill="#FFFFFF" fill-opacity=".7" stroke="#C9CFC3" stroke-width="1.5"/>
+    <rect x="20" y="56" width="80" height="66" rx="6" fill="#D99A22"/>
+    <g clip-path="url(#cc${n})">${cells}</g>
+    <path d="M22 60q34 6 76 0" stroke="#FFF3C8" stroke-opacity=".7" stroke-width="2" fill="none"/>
+    <rect x="30" y="14" width="60" height="20" rx="4" style="fill:var(--pine)"/>
+    <text x="60" y="27" text-anchor="middle" font-family="Libre Caslon Text, Georgia, serif" font-style="italic" font-size="10" fill="#FFFFFF">Shah</text>
+    <text x="60" y="144" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="7" letter-spacing="1" style="fill:var(--honey-ink)">HONEYCOMB</text>
+  </svg>`;
+}
 function jar(p, opts={}){
+  if (p.comb) return combBox(p);
   const n = ++jarN, c = p.color, label = p.gift ? (p.mini ? "MINIS" : "TRIO") : p.name.split(" ")[0].toUpperCase();
   if (p.gift && !opts.single) {
     return `<div class="jar" style="display:flex;align-items:flex-end;gap:2%">${["acacia","sulai","multiflora"].map((id,i)=>jar(P(id),{single:true,w: i===1? "38%":"31%"})).join("")}</div>`;
@@ -1155,7 +1184,7 @@ function renderProduct(){
     <div class="pd-info">
       <h2 id="pdTitle">${esc(p.name)}</h2>
       <p class="src muted">${esc(p.source)}</p>
-      <span class="jar-no">Hand-numbered · batches of ${CONFIG.batchSize} jars</span>
+      <span class="jar-no">${p.comb ? "Hand-cut · limited each season" : `Hand-numbered · batches of ${CONFIG.batchSize} jars`}</span>
       ${p.level?taste(p.level):""}
       ${rating(p.id)}
       <p>${esc(p.notes)}</p>
@@ -1182,7 +1211,7 @@ function renderProduct(){
       <div><a class="share" href="${shareLink(`${p.name} from Shah Apiaries™, raw honey from Kashmir: ${CONFIG.siteUrl}`)}" target="_blank" rel="noopener">${WA_ICON}Share on WhatsApp</a></div>
       <div class="pd-tabs">
         <details open><summary>Tasting &amp; uses</summary><p>${esc(p.use)}. Raw honey may crystallise; this is natural.</p></details>
-        <details><summary>Ingredients &amp; storage</summary><p>100% honey${p.id==="trio"?" (three varieties)":""}. No added sugar, no preservatives. Store closed, at room temperature, away from sunlight. Use a dry spoon. Not for infants under 12 months.</p></details>
+        <details><summary>Ingredients &amp; storage</summary><p>${p.comb ? "100% raw honey in natural beeswax comb. The wax is edible. No added sugar, no preservatives. Keep the box closed at room temperature, away from sunlight. Do not refrigerate. Some honey may leak from cut cells, which is natural. Not for infants under 12 months." : `100% honey${p.id==="trio"?" (three varieties)":""}. No added sugar, no preservatives. Store closed, at room temperature, away from sunlight. Use a dry spoon. Not for infants under 12 months.`}</p></details>
         <details><summary>Product details</summary><dl class="pd-legal">
           <dt>Net quantity</dt><dd>${esc(v.label)}</dd>
           <dt>MRP</dt><dd>${inr(v.mrp||v.price)} (inclusive of all taxes)</dd>

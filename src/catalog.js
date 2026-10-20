@@ -46,6 +46,13 @@ export const PRODUCTS = [
     ]
   },
   {
+    id: "comb", name: "Raw Honeycomb",
+    variants: [
+      { id: "250", label: "250 g", price: 649, mrp: 699, stock: true },
+      { id: "500", label: "500 g", price: 1199, mrp: 1299, stock: true }
+    ]
+  },
+  {
     id: "trio", name: "The Valley Trio", gift: true,
     variants: [{ id: "box", label: "Gift box, 3 × 500 g", price: 2149, mrp: 2297, stock: true }]
   },

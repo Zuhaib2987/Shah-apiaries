@@ -17,7 +17,7 @@ let codId, onlineOrder, adminCookie, promoCodes = [];
 
 await test("catalog lists products and online payments", async () => {
   const r = await fetch(t.url + "/api/catalog"); const j = await r.json();
-  assert.equal(r.status, 200); assert.equal(j.products.length, 5); assert.equal(j.payments.online, true); assert.equal(j.payments.keyId, "rzp_test_mock");
+  assert.equal(r.status, 200); assert.equal(j.products.length, 6); assert.equal(j.payments.online, true); assert.equal(j.payments.keyId, "rzp_test_mock");
 });
 
 const payAdvance = async j => {
