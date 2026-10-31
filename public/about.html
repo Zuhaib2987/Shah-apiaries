@@ -26,6 +26,10 @@ main{max-width:1040px}
 .timeline-h{margin-top:44px}
 .gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:12px}
 .gallery .slot{aspect-ratio:1}
+.portrait-fig,.gal-fig{margin:0}
+.portrait-fig img,.gal-fig img{display:block;width:100%;height:auto;border-radius:14px}
+.gal-fig img{aspect-ratio:1;object-fit:cover}
+.portrait-fig figcaption,.gal-fig figcaption{margin-top:8px;font-size:.82rem;color:var(--muted)}
 .recog-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:12px;align-items:start}
 .recog-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:grid}
 .recog-card article,.recog-card > *{min-width:0}
@@ -61,8 +65,12 @@ main{max-width:1040px}
   <p class="lede">Shah Apiaries™ is a family beekeeping business from Babapora, Zoonimar, Srinagar. Our founder has kept bees since 1967, and every jar we sell comes from colonies our family looks after, through the seasons, across the valleys of Kashmir.</p>
 
   <section class="founder" aria-labelledby="founder-h">
-    <!-- PHOTO: replace this box with <img src="/img/owner.webp" alt="Gulam Mohi Ud Din Shah at the apiary" style="width:100%;border-radius:14px"> -->
-    <div class="slot portrait"><span><b>Portrait</b>Photo of Gulam Mohi Ud Din Shah</span></div>
+    <figure class="portrait-fig">
+      <a class="cert" href="/img/founder-1960s.webp" target="_blank" rel="noopener" aria-label="Open the 1960s photograph of Gulam Mohi Ud Din Shah full size">
+        <img src="/img/founder-1960s-640.webp" srcset="/img/founder-1960s-640.webp 640w, /img/founder-1960s.webp 1200w" sizes="(max-width:760px) 100vw, 420px" alt="Gulam Mohi Ud Din Shah in the 1960s, holding a frame covered in bees at his apiary" width="1200" height="1304" loading="lazy" decoding="async">
+      </a>
+      <figcaption>Gulam Mohi Ud Din Shah at the hives in the 1960s.</figcaption>
+    </figure>
     <div class="story">
       <p class="eyebrow">Our founder</p>
       <h2 id="founder-h">Gulam Mohi Ud Din Shah</h2>
@@ -78,7 +86,12 @@ main{max-width:1040px}
   <h2 class="timeline-h">Through the years</h2>
   <!-- PHOTOS: replace each box with an <img>. Add more boxes for more photos. -->
   <div class="gallery">
-    <div class="slot"><span><b>Photo</b>Early years with the hives</span></div>
+    <figure class="gal-fig">
+      <a class="cert" href="/img/founder-1960s-frames.webp" target="_blank" rel="noopener" aria-label="Open the 1960s apiary photograph full size">
+        <img src="/img/founder-1960s-frames-640.webp" srcset="/img/founder-1960s-frames-640.webp 640w, /img/founder-1960s-frames.webp 1200w" sizes="(max-width:760px) 50vw, 300px" alt="Gulam Mohi Ud Din Shah, on the right, examining two frames of bees with another beekeeper in the 1960s" width="1200" height="801" loading="lazy" decoding="async">
+      </a>
+      <figcaption>Working the frames with a fellow beekeeper, 1960s.</figcaption>
+    </figure>
     <div class="slot"><span><b>Photo</b>At work in the apiary</span></div>
     <div class="slot"><span><b>Photo</b>With the family</span></div>
   </div>
