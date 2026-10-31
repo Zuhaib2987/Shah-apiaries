@@ -243,9 +243,8 @@ td.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 .report-highlights li{position:relative;padding-left:20px;font-size:.88rem;line-height:1.45}
 .report-highlights li::before{content:"";position:absolute;left:4px;top:.52em;width:8px;height:8px;border-radius:50%;background:var(--ok)}
 .report-note{display:block;margin-top:8px;font-size:.78rem;opacity:.85}
-.report-scan{margin:0;padding:16px 18px 0}
-.report-scan img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:10px;background:#fff}
-.report-scan figcaption{margin-top:7px;font-size:.78rem;color:var(--muted)}
+.report-scan-link{display:inline-flex;align-items:center;gap:6px;margin-top:6px;font-weight:600;color:var(--honey-ink)}
+.report-scan-link::after{content:"↗";font-size:.9em}
 .tag-batch{display:inline-block;padding:1px 7px;border:1px solid var(--line);border-radius:999px;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .lab-grid > *,.story-grid > *,.news .wrap > *,.hero .wrap > *,.pd > *{min-width:0}
 @media (max-width:860px){.lab-grid{grid-template-columns:1fr}}
@@ -1710,12 +1709,11 @@ function renderReport(code, jarNo){
   const p = P(r.product);
   $("#report").innerHTML = `<div class="report">
     <div class="report-head"><div><span class="eyebrow">Batch ${esc(code)} ${r.batchLabel?`<span class="tag-batch">${esc(r.batchLabel)}</span>`:""} ${r.sample?'<span class="tag-sample">Sample report</span>':""}</span><b style="font-size:1.15rem">${esc(p.name)}</b><span class="muted" style="font-size:.88rem">${esc(r.origin)} · ${esc(r.harvest)}</span>${jarNo ? `<span class="report-jar">Jar ${jarNo} <small>of ${r.jars}</small></span>` : `<span class="muted" style="font-size:.85rem">${r.jars} hand-numbered jars in this batch</span>`}</div>${jar(p,{single:true,w:"46px"})}</div>
-    ${r.scan ? `<figure class="report-scan"><a href="${esc(r.scan)}" target="_blank" rel="noopener"><img src="${esc(r.scan)}" alt="Signed laboratory report for batch ${esc(code)}" loading="lazy"></a><figcaption>The signed report as it came from the laboratory. Tap to open it full size.</figcaption></figure>` : ""}
     ${r.verdict ? `<p class="report-verdict"><b>${esc(r.verdict)}</b></p>` : ""}
     ${r.highlights?.length ? `<ul class="report-highlights">${r.highlights.map(h=>`<li>${esc(h)}</li>`).join("")}</ul>` : ""}
     <div class="table-scroll"><table><thead><tr><th>Test</th><th>Result</th><th>FSSAI limit</th><th>Status</th></tr></thead>
     <tbody>${r.params.map(x=>`<tr><td>${esc(x[0])}</td><td class="num">${esc(x[1])}</td><td class="num">${esc(x[2])}</td><td><span class="pass">Pass</span></td></tr>`).join("")}</tbody></table></div>
-    <div class="report-foot">Tested by ${esc(r.lab)} · Report ${esc(r.reportNo)}. Limits per FSSAI Food Product Standards for honey.${r.scan ? ` <a href="${esc(r.scan)}" target="_blank" rel="noopener">See the signed report</a>.` : ""}${r.note ? `<br><span class="report-note">${esc(r.note)}</span>` : ""}</div></div>`;
+    <div class="report-foot">Tested by ${esc(r.lab)} · Report ${esc(r.reportNo)}. Limits per FSSAI Food Product Standards for honey.${r.scan ? ` <a class="report-scan-link" href="${esc(r.scan)}" target="_blank" rel="noopener">See the full signed lab report</a>` : ""}${r.note ? `<br><span class="report-note">${esc(r.note)}</span>` : ""}</div></div>`;
 }
 
 /* ---------- reviews ---------- */
