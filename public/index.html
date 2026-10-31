@@ -238,6 +238,11 @@ td.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 .pass{display:inline-flex;align-items:center;gap:6px;color:var(--ok);font-weight:600}
 .pass::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
 .report-foot{padding:14px 18px;font-size:.84rem;color:var(--muted)}
+.report-verdict{margin:0;padding:14px 18px 0;color:var(--ok);font-size:.95rem}
+.report-highlights{margin:10px 0 0;padding:0 18px 4px;list-style:none;display:grid;gap:7px}
+.report-highlights li{position:relative;padding-left:20px;font-size:.88rem;line-height:1.45}
+.report-highlights li::before{content:"";position:absolute;left:4px;top:.52em;width:8px;height:8px;border-radius:50%;background:var(--ok)}
+.report-note{display:block;margin-top:8px;font-size:.78rem;opacity:.85}
 .lab-grid > *,.story-grid > *,.news .wrap > *,.hero .wrap > *,.pd > *{min-width:0}
 @media (max-width:860px){.lab-grid{grid-template-columns:1fr}}
 
@@ -991,7 +996,11 @@ const PRODUCTS = [
 
 /* Lab analysis reports (FSSAI Form C) shown on each product page, as online food sellers must.
    Put the PDF in public/reports/ and add its path, e.g. acacia:"/reports/acacia-2026.pdf". */
-const REPORTS = { acacia:"", sulai:"", multiflora:"", comb:"", trio:"", minis:"" };
+const REPORTS = { acacia:"", sulai:"/reports/sulai-inf-honey-sola-2026-10.jpg", multiflora:"", comb:"", trio:"", minis:"" };
+
+/* What kind of report each link above is, shown next to it. Use "Form C" only for a formal
+   Form C report. An informal lab report must never be labelled Form C. */
+const REPORT_TYPES = { acacia:"Form C", sulai:"informal report", multiflora:"Form C", comb:"Form C", trio:"Form C", minis:"Form C" };
 
 /* Honey colour grades (Pfund scale names). Each honey's pfund value above is its index here. */
 const PFUND = [["Water white","#FDF8E1"],["Extra white","#F9EDB8"],["White","#F5E08A"],["Extra light amber","#EFC75B"],["Light amber","#DFA531"],["Amber","#B8711A"],["Dark amber","#6E3A10"]];
@@ -1010,8 +1019,21 @@ const SAMPLE_REVIEWS = [
 const LAB_REPORTS = {
   "SA-AC-2605": { sample:true, jars:500, product:"acacia", harvest:"May 2026", origin:"Valley orchards, Srinagar district", lab:"(Lab name)", reportNo:"(Report no.)",
     params:[["Moisture","17.4 %","≤ 20 %"],["HMF","9.2 mg/kg","≤ 40 mg/kg"],["C4 sugar","1.6 %","≤ 7 %"],["Sucrose","1.1 %","≤ 5 %"],["Fructose / glucose ratio","1.46","0.95 to 1.50"]] },
-  "SA-SU-2609": { sample:true, jars:500, product:"sulai", harvest:"September 2026", origin:"Hillside apiary, Kashmir", lab:"(Lab name)", reportNo:"(Report no.)",
-    params:[["Moisture","18.1 %","≤ 20 %"],["HMF","7.8 mg/kg","≤ 40 mg/kg"],["C4 sugar","2.0 %","≤ 7 %"],["Sucrose","0.9 %","≤ 5 %"],["Fructose / glucose ratio","1.08","0.95 to 1.50"]] },
+  "SA-SU-2609": { sample:false, jars:500, product:"sulai", harvest:"2026 harvest", origin:"Hillside apiary, Kashmir",
+    lab:"Food Laboratory Kashmir, Dalgate, Srinagar", reportNo:"INF-HONEY-SOLA, issued 24 October 2026",
+    verdict:"Declared Standard by the Food Analyst",
+    reportType:"informal analytical report",
+    scan:"/reports/sulai-inf-honey-sola-2026-10.jpg",
+    note:"This is an informal analytical report from the Food Laboratory Kashmir. The laboratory states that it covers only the parameters listed above and may not be used for legal purposes. A formal Form C report is being arranged.",
+    highlights:[
+      "Every one of the 13 parameters tested is within the FSSAI limit",
+      "Aniline test negative: no added commercial sugar or jaggery",
+      "Fiehe's test negative: not overheated, no added invert sugar",
+      "Fructose to glucose ratio 1.00, inside the natural honey range",
+      "Total ash 0.45 %, under the 0.50 % limit",
+      "All six visual checks clear: no bee fragments, insects, insect debris, wax pieces, sand or other foreign matter"
+    ],
+    params:[["Moisture","19.88 %","≤ 20 %"],["Specific gravity at 27 °C","1.36","≥ 1.35"],["Acidity as formic acid","0.19 %","≤ 0.20 %"],["Fructose / glucose ratio","1.00","0.95 to 1.50"],["Total ash","0.45 %","≤ 0.50 %"],["Aniline test","Negative","Negative"],["Fiehe's test","Negative","Negative"],["Fragments of bees","Absent","Absent"],["Visible insects","Absent","Absent"],["Insect debris","Absent","Absent"],["Pieces of bee's wax","Absent","Absent"],["Grains of sand","Absent","Absent"],["Other extraneous matter","Absent","Absent"]] },
   "SA-MF-2608": { sample:true, jars:500, product:"multiflora", harvest:"August 2026", origin:"Gurez Valley meadows", lab:"(Lab name)", reportNo:"(Report no.)",
     params:[["Moisture","17.9 %","≤ 20 %"],["HMF","11.5 mg/kg","≤ 40 mg/kg"],["C4 sugar","2.3 %","≤ 7 %"],["Sucrose","1.4 %","≤ 5 %"],["Fructose / glucose ratio","1.22","0.95 to 1.50"]] }
 };
@@ -1223,7 +1245,7 @@ function renderProduct(){
           <dt>Packed by</dt><dd>Shah Apiaries™, Babapora, Zoonimar, Srinagar, Jammu &amp; Kashmir</dd>
           <dt>fssai</dt><dd class="mono">${esc(CONFIG.fssai.replace(/^fssai\s*/i,""))}</dd>
           <dt>Country of origin</dt><dd>India</dd>
-          ${REPORTS[p.id] ? `<dt>Analysis report</dt><dd><a href="${esc(REPORTS[p.id])}" target="_blank" rel="noopener">View lab report (Form C)</a></dd>` : ""}
+          ${REPORTS[p.id] ? `<dt>Analysis report</dt><dd><a href="${esc(REPORTS[p.id])}" target="_blank" rel="noopener">View lab report${REPORT_TYPES[p.id] ? ` (${esc(REPORT_TYPES[p.id])})` : ""}</a></dd>` : ""}
           <dt>Date of packing</dt><dd>Printed on the ${p.comb?"box":"jar"} with the batch code</dd>
           <dt>Best before</dt><dd>18 months from the date of packing</dd>
           <dt>Customer care</dt><dd>${esc(CONFIG.email)}${CONFIG.whatsapp?` · +${esc(CONFIG.whatsapp)}`:""}</dd>
@@ -1683,9 +1705,11 @@ function renderReport(code, jarNo){
   const p = P(r.product);
   $("#report").innerHTML = `<div class="report">
     <div class="report-head"><div><span class="eyebrow">Batch ${esc(code)} ${r.sample?'<span class="tag-sample">Sample report</span>':""}</span><b style="font-size:1.15rem">${esc(p.name)}</b><span class="muted" style="font-size:.88rem">${esc(r.origin)} · ${esc(r.harvest)}</span>${jarNo ? `<span class="report-jar">Jar ${jarNo} <small>of ${r.jars}</small></span>` : `<span class="muted" style="font-size:.85rem">${r.jars} hand-numbered jars in this batch</span>`}</div>${jar(p,{single:true,w:"46px"})}</div>
+    ${r.verdict ? `<p class="report-verdict"><b>${esc(r.verdict)}</b></p>` : ""}
+    ${r.highlights?.length ? `<ul class="report-highlights">${r.highlights.map(h=>`<li>${esc(h)}</li>`).join("")}</ul>` : ""}
     <div class="table-scroll"><table><thead><tr><th>Test</th><th>Result</th><th>FSSAI limit</th><th>Status</th></tr></thead>
     <tbody>${r.params.map(x=>`<tr><td>${esc(x[0])}</td><td class="num">${esc(x[1])}</td><td class="num">${esc(x[2])}</td><td><span class="pass">Pass</span></td></tr>`).join("")}</tbody></table></div>
-    <div class="report-foot">Tested by ${esc(r.lab)} · Report ${esc(r.reportNo)}. Limits per FSSAI Food Product Standards for honey.</div></div>`;
+    <div class="report-foot">Tested by ${esc(r.lab)} · Report ${esc(r.reportNo)}. Limits per FSSAI Food Product Standards for honey.${r.scan ? ` <a href="${esc(r.scan)}" target="_blank" rel="noopener">See the signed report</a>.` : ""}${r.note ? `<br><span class="report-note">${esc(r.note)}</span>` : ""}</div></div>`;
 }
 
 /* ---------- reviews ---------- */
