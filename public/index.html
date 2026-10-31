@@ -222,7 +222,10 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;backgroun
 
 /* lab */
 .lab{background:var(--surface);border-block:1px solid var(--line)}
-.lab-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:40px;align-items:start}
+.lab-grid{display:grid;grid-template-columns:.78fr 1.22fr;gap:40px;align-items:start}
+/* The report runs long, so on wide screens the heading and batch picker travel with it
+   instead of leaving a tall empty column. */
+@media (min-width:861px){.lab-grid > div:first-child{position:sticky;top:96px}}
 .lab-form{display:flex;gap:8px;margin-top:22px;flex-wrap:wrap}
 .lab-form input{flex:1 1 180px;min-width:0;text-transform:uppercase}
 .hint{font-size:.84rem;color:var(--muted);margin-top:10px}
@@ -240,6 +243,7 @@ td.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 .report-foot{padding:14px 18px;font-size:.84rem;color:var(--muted)}
 .report-verdict{margin:0;padding:14px 18px 0;color:var(--ok);font-size:.95rem}
 .report-highlights{margin:10px 0 0;padding:0 18px 4px;list-style:none;display:grid;gap:7px}
+@media (min-width:1100px){.report-highlights{grid-template-columns:1fr 1fr;gap:7px 22px}}
 .report-highlights li{position:relative;padding-left:20px;font-size:.88rem;line-height:1.45}
 .report-highlights li::before{content:"";position:absolute;left:4px;top:.52em;width:8px;height:8px;border-radius:50%;background:var(--ok)}
 .report-note{display:block;margin-top:8px;font-size:.78rem;opacity:.85}
@@ -731,7 +735,7 @@ footer{background:var(--surface);border-top:1px solid var(--line);padding-block:
       <div class="shead"><div><p class="eyebrow">About us</p><h2>The people behind the hives</h2></div></div>
 
       <a class="owner owner-link" href="/about">
-        <div class="owner-photo"><img src="img/founder-1960s-640.webp" srcset="img/founder-1960s-640.webp 640w, img/founder-1960s.webp 1200w" sizes="150px" alt="Gulam Mohi Ud Din Shah inspecting a frame of bees at his apiary in the 1960s" width="1200" height="1304" loading="lazy" decoding="async"></div>
+        <div class="owner-photo"><img src="img/founder-avatar.webp" sizes="150px" alt="Gulam Mohi Ud Din Shah at his apiary in the 1960s" width="480" height="480" loading="lazy" decoding="async"></div>
         <div class="owner-txt">
           <p class="eyebrow">The owner</p>
           <h3>Gulam Mohi Ud Din Shah</h3>
