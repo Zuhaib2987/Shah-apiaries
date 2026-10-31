@@ -15,7 +15,7 @@ main{max-width:1040px}
 .top .in,footer .in{max-width:1040px}
 .founder h2{font-size:clamp(1.8rem,4vw,2.4rem)}
 .lede{color:var(--muted);font-size:1.08rem;max-width:62ch}
-.founder{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:36px;align-items:start;margin-top:34px}
+.founder{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:36px;align-items:start;margin-top:34px}
 .founder h2{margin-top:6px}
 .role{color:var(--muted);margin:0 0 14px}
 .slot{border:1.5px dashed #D9D4C8;border-radius:var(--r);background:var(--sunk);color:var(--muted);display:grid;place-items:center;text-align:center;padding:16px;font-size:.88rem}
@@ -26,10 +26,13 @@ main{max-width:1040px}
 .timeline-h{margin-top:44px}
 .gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:12px}
 .gallery .slot{aspect-ratio:1}
+/* Archive photographs. Own frame, no dark plate behind them, so no corner wedges. */
 .portrait-fig,.gal-fig{margin:0}
-.portrait-fig img,.gal-fig img{display:block;width:100%;height:auto;border-radius:14px}
+.shot{display:block;border-radius:var(--r);overflow:hidden;background:transparent;text-decoration:none;line-height:0}
+.portrait-fig img,.gal-fig img{display:block;width:100%;height:auto}
+.portrait-fig img{aspect-ratio:4/5;object-fit:cover;object-position:center}
 .gal-fig img{aspect-ratio:1;object-fit:cover}
-.portrait-fig figcaption,.gal-fig figcaption{margin-top:8px;font-size:.82rem;color:var(--muted)}
+.portrait-fig figcaption,.gal-fig figcaption{margin-top:10px;font-size:.82rem;color:var(--muted)}
 .recog-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:12px;align-items:start}
 .recog-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:grid}
 .recog-card article,.recog-card > *{min-width:0}
@@ -50,7 +53,7 @@ main{max-width:1040px}
 .cta{margin-top:44px;background:var(--honey-soft);border-radius:var(--r);padding:22px;display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between}
 .cta h2{margin:0;font-size:1.5rem}
 .btn{display:inline-block;background:var(--honey);color:#1E1E1E;font-weight:600;text-decoration:none;border-radius:999px;padding:12px 22px}
-@media (max-width:760px){.founder,.recog-grid,.recog-card.wide{grid-template-columns:1fr}.portrait{max-width:340px}.gallery{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:760px){.founder,.recog-grid,.recog-card.wide{grid-template-columns:1fr}.portrait{max-width:340px}.gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.portrait-fig{margin-inline:0}.portrait-fig img{aspect-ratio:4/5}}
 </style>
 </head>
 <body>
@@ -66,8 +69,8 @@ main{max-width:1040px}
 
   <section class="founder" aria-labelledby="founder-h">
     <figure class="portrait-fig">
-      <a class="cert" href="/img/founder-1960s.webp" target="_blank" rel="noopener" aria-label="Open the 1960s photograph of Gulam Mohi Ud Din Shah full size">
-        <img src="/img/founder-1960s-640.webp" srcset="/img/founder-1960s-640.webp 640w, /img/founder-1960s.webp 1200w" sizes="(max-width:760px) 100vw, 420px" alt="Gulam Mohi Ud Din Shah in the 1960s, holding a frame covered in bees at his apiary" width="1200" height="1304" loading="lazy" decoding="async">
+      <a class="shot" href="/img/founder-1960s.webp" target="_blank" rel="noopener" aria-label="Open the 1960s photograph of Gulam Mohi Ud Din Shah full size">
+        <img src="/img/founder-1960s-640.webp" srcset="/img/founder-1960s-640.webp 640w, /img/founder-1960s.webp 1200w" sizes="(max-width:760px) 100vw, 540px" alt="Gulam Mohi Ud Din Shah in the 1960s, holding a frame covered in bees at his apiary" width="1200" height="1304" loading="lazy" decoding="async">
       </a>
       <figcaption>Gulam Mohi Ud Din Shah at the hives in the 1960s.</figcaption>
     </figure>
@@ -87,7 +90,7 @@ main{max-width:1040px}
   <!-- PHOTOS: replace each box with an <img>. Add more boxes for more photos. -->
   <div class="gallery">
     <figure class="gal-fig">
-      <a class="cert" href="/img/founder-1960s-frames.webp" target="_blank" rel="noopener" aria-label="Open the 1960s apiary photograph full size">
+      <a class="shot" href="/img/founder-1960s-frames.webp" target="_blank" rel="noopener" aria-label="Open the 1960s apiary photograph full size">
         <img src="/img/founder-1960s-frames-640.webp" srcset="/img/founder-1960s-frames-640.webp 640w, /img/founder-1960s-frames.webp 1200w" sizes="(max-width:760px) 50vw, 300px" alt="Gulam Mohi Ud Din Shah, on the right, examining two frames of bees with another beekeeper in the 1960s" width="1200" height="801" loading="lazy" decoding="async">
       </a>
       <figcaption>Working the frames with a fellow beekeeper, 1960s.</figcaption>
