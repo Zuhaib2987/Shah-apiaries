@@ -243,6 +243,10 @@ td.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 .report-highlights li{position:relative;padding-left:20px;font-size:.88rem;line-height:1.45}
 .report-highlights li::before{content:"";position:absolute;left:4px;top:.52em;width:8px;height:8px;border-radius:50%;background:var(--ok)}
 .report-note{display:block;margin-top:8px;font-size:.78rem;opacity:.85}
+.report-scan{margin:0;padding:16px 18px 0}
+.report-scan img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:10px;background:#fff}
+.report-scan figcaption{margin-top:7px;font-size:.78rem;color:var(--muted)}
+.tag-batch{display:inline-block;padding:1px 7px;border:1px solid var(--line);border-radius:999px;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .lab-grid > *,.story-grid > *,.news .wrap > *,.hero .wrap > *,.pd > *{min-width:0}
 @media (max-width:860px){.lab-grid{grid-template-columns:1fr}}
 
@@ -670,12 +674,13 @@ footer{background:var(--surface);border-top:1px solid var(--line);padding-block:
         <p class="lede" style="margin-top:14px">Every jar carries a batch code and its own number, like 233/500. Enter them to see where that honey came from, when we harvested it, and how it tested against FSSAI honey standards.</p>
         <form class="lab-form" id="labForm" novalidate>
           <label class="sr" for="batchIn">Batch code</label>
-          <input type="text" id="batchIn" placeholder="Batch code" autocomplete="off" class="mono">
+          <input type="text" id="batchIn" placeholder="Batch code" autocomplete="off" class="mono" list="batchList">
+          <datalist id="batchList"></datalist>
           <label class="sr" for="jarIn">Jar number</label>
           <input type="text" id="jarIn" placeholder="Jar no." inputmode="numeric" autocomplete="off" class="mono" style="flex:0 1 110px">
           <button class="btn btn-pine" type="submit">View report</button>
         </form>
-        <p class="hint">Try a sample: <span id="batchSamples"></span></p>
+        <p class="hint">Pick your batch from the list, or type the code printed on your label.</p>
         <p class="err" id="batchErr" hidden></p>
       </div>
       <div id="report"></div>
@@ -1019,7 +1024,7 @@ const SAMPLE_REVIEWS = [
 const LAB_REPORTS = {
   "SA-AC-2605": { sample:true, jars:500, product:"acacia", harvest:"May 2026", origin:"Valley orchards, Srinagar district", lab:"(Lab name)", reportNo:"(Report no.)",
     params:[["Moisture","17.4 %","≤ 20 %"],["HMF","9.2 mg/kg","≤ 40 mg/kg"],["C4 sugar","1.6 %","≤ 7 %"],["Sucrose","1.1 %","≤ 5 %"],["Fructose / glucose ratio","1.46","0.95 to 1.50"]] },
-  "SA-SU-2609": { sample:false, jars:500, product:"sulai", harvest:"2026 harvest", origin:"Hillside apiary, Kashmir",
+  "INF-HONEY-SOLA-01": { sample:false, batchLabel:"First batch", jars:500, product:"sulai", harvest:"2026 harvest", origin:"Hillside apiary, Kashmir",
     lab:"Food Laboratory Kashmir, Dalgate, Srinagar", reportNo:"INF-HONEY-SOLA, issued 24 October 2026",
     verdict:"Declared Standard by the Food Analyst",
     reportType:"informal analytical report",
@@ -1051,7 +1056,7 @@ const FAQ = [
   ["What does the number on my jar mean?","We fill every batch by hand and number each jar, for example 233/500 means jar 233 of a 500-jar batch. Together with the batch code, it ties your jar to the harvest and lab report it came from. When a batch is sold out, there are no more jars of it."],
   ["Why has my honey turned solid?","Crystallisation is natural for raw honey and shows it was not overheated. Sulai sets within weeks, Gurez multi-floral in a few months, Acacia rarely. To make it runny, stand the closed jar in warm water (below 45 °C) and stir."],
   ["Is your honey raw?","Yes. We cold strain it through cloth to remove wax bits and do not heat, pasteurise or blend it. You may see tiny specks of pollen or wax, which are natural."],
-  ["How do I check my jar's lab report?","Find the batch code on the label (it starts with SA-) and enter it in the Lab Reports section, or scan the QR code on the jar."],
+  ["How do I check my jar's lab report?","Find the batch code printed on the label and pick it from the list in the Lab Reports section, or type it in. You can also scan the QR code on the jar, which opens the report straight away."],
   ["Can babies have honey?","No. Do not give honey to infants under 12 months of age."],
   ["How long does delivery take?","We dispatch from Srinagar within 1 to 2 working days. Jammu & Kashmir usually receives in 2 to 4 days, the rest of India in 4 to 8 days. Enter your PIN code on any product to see an estimate."],
   ["Do you offer cash on delivery?",`Yes, across India. Pay ${CONFIG.codAdvancePct}% online when you order and the rest in cash on delivery. In Jammu & Kashmir the advance is only ${CONFIG.codAdvancePctJK}%. A ₹${CONFIG.codFee} COD fee applies. UPI and card payments have no extra fee.`],
@@ -1704,7 +1709,8 @@ function renderReport(code, jarNo){
   if (!r) { $("#report").innerHTML = `<div class="empty">Enter a batch code to see its report.<br><span style="font-size:.85rem">Batch codes start with SA- and are printed on the jar label.</span></div>`; return; }
   const p = P(r.product);
   $("#report").innerHTML = `<div class="report">
-    <div class="report-head"><div><span class="eyebrow">Batch ${esc(code)} ${r.sample?'<span class="tag-sample">Sample report</span>':""}</span><b style="font-size:1.15rem">${esc(p.name)}</b><span class="muted" style="font-size:.88rem">${esc(r.origin)} · ${esc(r.harvest)}</span>${jarNo ? `<span class="report-jar">Jar ${jarNo} <small>of ${r.jars}</small></span>` : `<span class="muted" style="font-size:.85rem">${r.jars} hand-numbered jars in this batch</span>`}</div>${jar(p,{single:true,w:"46px"})}</div>
+    <div class="report-head"><div><span class="eyebrow">Batch ${esc(code)} ${r.batchLabel?`<span class="tag-batch">${esc(r.batchLabel)}</span>`:""} ${r.sample?'<span class="tag-sample">Sample report</span>':""}</span><b style="font-size:1.15rem">${esc(p.name)}</b><span class="muted" style="font-size:.88rem">${esc(r.origin)} · ${esc(r.harvest)}</span>${jarNo ? `<span class="report-jar">Jar ${jarNo} <small>of ${r.jars}</small></span>` : `<span class="muted" style="font-size:.85rem">${r.jars} hand-numbered jars in this batch</span>`}</div>${jar(p,{single:true,w:"46px"})}</div>
+    ${r.scan ? `<figure class="report-scan"><a href="${esc(r.scan)}" target="_blank" rel="noopener"><img src="${esc(r.scan)}" alt="Signed laboratory report for batch ${esc(code)}" loading="lazy"></a><figcaption>The signed report as it came from the laboratory. Tap to open it full size.</figcaption></figure>` : ""}
     ${r.verdict ? `<p class="report-verdict"><b>${esc(r.verdict)}</b></p>` : ""}
     ${r.highlights?.length ? `<ul class="report-highlights">${r.highlights.map(h=>`<li>${esc(h)}</li>`).join("")}</ul>` : ""}
     <div class="table-scroll"><table><thead><tr><th>Test</th><th>Result</th><th>FSSAI limit</th><th>Status</th></tr></thead>
@@ -1917,7 +1923,15 @@ function boot(){
   $("#trioPrice").textContent = inr(P("trio").variants[0].price);
   $("#freeShipTxt").textContent = `Free shipping above ${inr(CONFIG.freeShippingAbove)}`;
   if (CONFIG.soldThisMonth > 0){ $("#soldFact").hidden=false; $("#soldNum").textContent = CONFIG.soldThisMonth.toLocaleString("en-IN"); }
-  $("#batchSamples").innerHTML = Object.keys(LAB_REPORTS).map(k=>`<button data-batch="${k}">${k}</button>`).join(" · ");
+  /* Batch dropdown. Real reports only, unless there are none yet. Add a batch to
+     LAB_REPORTS and it appears here on its own. */
+  const realBatches = Object.keys(LAB_REPORTS).filter(k => !LAB_REPORTS[k].sample);
+  const listed = realBatches.length ? realBatches : Object.keys(LAB_REPORTS);
+  $("#batchList").innerHTML = listed.map(k=>{
+    const r = LAB_REPORTS[k], p = P(r.product);
+    const label = [p?.name, r.batchLabel].filter(Boolean).join(" · ");
+    return `<option value="${esc(k)}">${esc(label)}</option>`;
+  }).join("");
   $("#recipeList").innerHTML = RECIPES.map(r=>`<article class="recipe"><span class="meta">${esc(r.time)} · serves ${esc(r.serves)}</span><h3>${esc(r.title)}</h3><ol>${r.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol><p class="uses">Made with <button data-view="${r.product}">${esc(P(r.product).name)}</button></p><a class="share" style="align-self:flex-start" href="${shareLink(`${r.title}: ${r.steps.join(" ")} Recipe from Shah Apiaries™ ${CONFIG.siteUrl}`)}" target="_blank" rel="noopener">${WA_ICON}Share</a></article>`).join("");
   $("#ownerBio").innerHTML = OWNER_BIO.map(t=>`<p>${esc(t)}</p>`).join("");
   if (OWNER_BIO.length || !CONFIG.demoMode) document.querySelectorAll("[data-placeholder]").forEach(el => el.hidden = true);
@@ -1930,7 +1944,7 @@ function boot(){
   const wa = $("#waFloat");
   if (CONFIG.whatsapp) wa.href = waLink("Hi Shah Apiaries™, I have a question about your honey."); else wa.hidden = true;
   renderGrid(); renderCounts(); renderCart(); renderReviews(); renderQuiz(); renderPfund(); renderCalc(); renderGiftPick();
-  $("#guideMeta").textContent = "Guide · updated " + GUIDE_UPDATED; renderReport(Object.keys(LAB_REPORTS)[0]);
+  $("#guideMeta").textContent = "Guide · updated " + GUIDE_UPDATED; renderReport(listed[0]);
   drawValley(); let rt; addEventListener("resize", ()=>{ clearTimeout(rt); rt=setTimeout(drawValley,150); });
   armExit();
   const h = location.hash.slice(1);
@@ -1938,8 +1952,17 @@ function boot(){
     const tm = location.hash.match(/^#track-(SA-[0-9A-Z-]+)$/i);
     if (tm) { window.__trackId = tm[1].toUpperCase(); open("orders"); }
   });
-  const hm = h.toUpperCase().match(/^(SA-[A-Z]{2}-\d{4})(?:-(\d+))?$/);
-  if (hm && LAB_REPORTS[hm[1]]) { $("#batchIn").value=hm[1]; if (hm[2]) $("#jarIn").value=hm[2]; renderReport(hm[1], +hm[2]||0); $("#lab").scrollIntoView(); }
+  /* #BATCHCODE or #BATCHCODE-233 (jar number). Batch codes may themselves end in digits,
+     so match the longest known code first, then read any jar number left over. */
+  const hu = h.toUpperCase();
+  const hitCode = Object.keys(LAB_REPORTS).sort((a,b)=>b.length-a.length)
+    .find(k => hu === k || hu.startsWith(k + "-"));
+  if (hitCode) {
+    const rest = hu.slice(hitCode.length).replace(/^-/,"");
+    const jn = /^\d+$/.test(rest) ? +rest : 0;
+    $("#batchIn").value = hitCode; if (jn) $("#jarIn").value = jn;
+    renderReport(hitCode, jn); $("#lab").scrollIntoView();
+  }
 }
 boot();
 </script>
