@@ -54,7 +54,7 @@ export const PRODUCTS = [
   },
   {
     id: "trio", name: "The Valley Trio", gift: true,
-    variants: [{ id: "box", label: "Gift box, 3 × 500 g", price: 2149, mrp: 2297, stock: true }]
+    variants: [{ id: "box", label: "Gift box, 3 × 500 g", price: 1999, mrp: 1999, stock: true }]
   },
   {
     id: "minis", name: "Tasting Set", gift: true,
