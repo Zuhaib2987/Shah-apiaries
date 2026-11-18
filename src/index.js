@@ -98,9 +98,29 @@ export default {
         return json({ error: "Something went wrong on our side. Please try again." }, 500);
       }
     }
-    return withSecurityHeaders(await env.ASSETS.fetch(request));
+    return withSecurityHeaders(localiseMeta(await env.ASSETS.fetch(request), url, env));
   }
 };
+
+// The share tags and canonical links are written for the real domain. Until that domain
+// is live the shop answers on *.workers.dev, where those absolute URLs point at nothing,
+// so a shared link shows no picture. On any host that is not the canonical one, the tags
+// are rewritten to the host actually serving the page and the page is marked noindex, so
+// previews work while testing without the preview host competing in search results.
+// Once shahapiaries.in serves the site, requests to it pass through untouched.
+function localiseMeta(response, url, env) {
+  if (typeof HTMLRewriter === "undefined") return response; // Node test harness
+  if (!(response.headers.get("content-type") || "").includes("text/html")) return response;
+  const canonical = String(env.SITE_URL || "https://shahapiaries.in").replace(/\/+$/, "");
+  if (url.origin === canonical) return response;
+  const swap = v => (v && v.startsWith(canonical) ? url.origin + v.slice(canonical.length) : v);
+  return new HTMLRewriter()
+    .on('link[rel="canonical"]', { element: e => e.setAttribute("href", swap(e.getAttribute("href")) || url.href) })
+    .on('meta[property="og:url"]', { element: e => e.setAttribute("content", swap(e.getAttribute("content")) || url.href) })
+    .on('meta[property="og:image"]', { element: e => e.setAttribute("content", swap(e.getAttribute("content")) || "") })
+    .on("head", { element: e => e.append('<meta name="robots" content="noindex,nofollow">', { html: true }) })
+    .transform(response);
+}
 
 // Sent with every page and asset.
 //
