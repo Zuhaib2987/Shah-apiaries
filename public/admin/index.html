@@ -159,6 +159,7 @@ label{font-size:.8rem;font-weight:600;display:block;margin-bottom:4px}
     <button class="btn btn-ghost btn-sm" id="codesBtn" aria-pressed="false">Codes</button>
     <button class="btn btn-ghost btn-sm" id="refreshBtn" aria-label="Refresh">Refresh</button>
     <button class="btn btn-ghost btn-sm" id="logoutBtn">Log out</button>
+    <button class="btn btn-ghost btn-sm" id="revokeBtn" title="Ends your login on every device, including this one. Use this if a phone or laptop is lost.">Sign out everywhere</button>
   </header>
   <main class="wrap" id="codesView" hidden>
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
@@ -228,6 +229,11 @@ $("#loginForm").addEventListener("submit", async e => {
   finally { btn.disabled = false; }
 });
 $("#logoutBtn").addEventListener("click", async () => { await api("/api/admin/logout", { method:"POST", body:"{}" }).catch(()=>{}); S.sel=null; showLogin(); });
+$("#revokeBtn").addEventListener("click", async () => {
+  if (!confirm("Sign out of Shah Apiaries admin on every device, including this one?\n\nUse this if a phone or laptop is lost. You will need to log in again.")) return;
+  await api("/api/admin/revoke-sessions", { method:"POST", body:"{}" }).catch(()=>{});
+  S.sel = null; showLogin(); toast("Signed out on all devices");
+});
 $("#refreshBtn").addEventListener("click", () => refresh().then(()=>toast("Updated")));
 $("#searchForm").addEventListener("submit", e => { e.preventDefault(); S.q = $("#q").value.trim(); S.page = 0; loadList(); });
 $("#moreBtn").addEventListener("click", () => { S.page++; loadList(true); });

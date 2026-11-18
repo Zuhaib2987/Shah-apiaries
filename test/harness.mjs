@@ -51,7 +51,7 @@ export const hashPassword = pw => {
 
 function listen(server, port) { return new Promise(r => server.listen(port, "127.0.0.1", () => r(server.address().port))); }
 
-export async function start({ port = 0, payments = true } = {}) {
+export async function start({ port = 0, payments = true, env: envOverrides = {} } = {}) {
   // Fake Razorpay
   const rzpOrders = [];
   const rzp = http.createServer((req, res) => {
@@ -70,9 +70,11 @@ export async function start({ port = 0, payments = true } = {}) {
     DB: new FakeD1(), ASSETS: assets, SITE_URL: "http://localhost",
     SESSION_SECRET: "test-session-secret-that-is-long-enough-1234567890",
     ADMIN_USERS: JSON.stringify({ zuhaib: hashPassword("honey-admin-1"), family: hashPassword("honey-admin-2") }),
+    ORDER_RATE_LIMIT_PER_HOUR: "1000",
     RAZORPAY_WEBHOOK_SECRET: "whsecret",
     RAZORPAY_API_BASE: `http://127.0.0.1:${rzpPort}`,
-    ...(payments ? { RAZORPAY_KEY_ID: "rzp_test_mock", RAZORPAY_KEY_SECRET: "mocksecret" } : {})
+    ...(payments ? { RAZORPAY_KEY_ID: "rzp_test_mock", RAZORPAY_KEY_SECRET: "mocksecret" } : {}),
+    ...envOverrides
   };
 
   const server = http.createServer(async (req, res) => {
@@ -93,6 +95,12 @@ export async function start({ port = 0, payments = true } = {}) {
 
   return {
     env, rzpOrders, url: `http://localhost:${appPort}`,
+    // Lets a test change an admin password the way the real secret would change.
+    setPassword: (user, password) => {
+      const users = JSON.parse(env.ADMIN_USERS);
+      users[user] = hashPassword(password);
+      env.ADMIN_USERS = JSON.stringify(users);
+    },
     sign: (orderId, paymentId) => createHmac("sha256", "mocksecret").update(`${orderId}|${paymentId}`).digest("hex"),
     signWebhook: body => createHmac("sha256", "whsecret").update(body).digest("hex"),
     close: () => { server.close(); rzp.close(); }

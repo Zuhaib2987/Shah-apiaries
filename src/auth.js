@@ -1,10 +1,16 @@
 import { b64urlDecode, b64urlEncode, hmacHex, safeEqual, verifyPassword } from "./crypto.js";
-import { HttpError, clientIp } from "./http.js";
+import { HttpError, clientIp, countHits } from "./http.js";
 
 const COOKIE = "sa_admin";
-const SESSION_DAYS = 30;
-const MAX_FAILS = 8;            // per IP...
-const FAIL_WINDOW_MS = 15 * 60 * 1000; // ...per 15 minutes
+const SESSION_DAYS = 7;
+const MAX_FAILS = 8;                    // wrong tries per IP...
+const MAX_FAILS_PER_USER = 10;          // ...and per account name, so one password
+const FAIL_WINDOW_MS = 15 * 60 * 1000;  // cannot be guessed forever from many addresses
+
+export const SESSION_SCHEMA = `CREATE TABLE IF NOT EXISTS admin_revocations (
+  user TEXT PRIMARY KEY,
+  at   INTEGER NOT NULL
+)`;
 
 function adminUsers(env) {
   try {
@@ -24,6 +30,19 @@ async function sign(env, payload) {
   return `${body}.${await hmacHex(sessionSecret(env), body)}`;
 }
 
+// Short fingerprint of the stored password hash. It travels inside the session token,
+// so changing a password changes the fingerprint and every old session stops working.
+// Without this, changing the password after a suspected leak did nothing.
+const passwordStamp = async (env, storedHash) => (await hmacHex(sessionSecret(env), "pw:" + storedHash)).slice(0, 16);
+
+// Time of the last "sign out everywhere" for this user, 0 if never.
+async function revokedAt(env, user) {
+  try {
+    const row = await env.DB.prepare("SELECT at FROM admin_revocations WHERE user = ?").bind(user).first();
+    return row?.at || 0;
+  } catch { return 0; } // table not created yet: fail open rather than lock everyone out
+}
+
 export async function getAdmin(request, env) {
   const cookie = request.headers.get("cookie") || "";
   const match = cookie.match(/(?:^|;\s*)sa_admin=([^;]+)/);
@@ -34,9 +53,19 @@ export async function getAdmin(request, env) {
   try {
     const data = JSON.parse(new TextDecoder().decode(b64urlDecode(body)));
     if (!data.u || !data.exp || data.exp < Date.now()) return null;
-    if (!adminUsers(env)[data.u]) return null; // user removed
+    const stored = adminUsers(env)[data.u];
+    if (!stored) return null;                                      // user removed
+    if (!safeEqual(data.pw || "", await passwordStamp(env, stored))) return null; // password changed
+    if (!data.iat || data.iat < await revokedAt(env, data.u)) return null;        // signed out everywhere
     return data.u;
   } catch { return null; }
+}
+
+// Ends every session for this admin, including the one making the request.
+export async function revokeSessions(env, user) {
+  await env.DB.prepare("INSERT INTO admin_revocations (user, at) VALUES (?, ?) ON CONFLICT(user) DO UPDATE SET at = excluded.at")
+    .bind(user, Date.now()).run();
+  return { ok: true };
 }
 
 export async function requireAdmin(request, env) {
@@ -50,22 +79,26 @@ export async function login(request, env, { username, password }) {
   if (!Object.keys(adminUsers(env)).length)
     throw new HttpError(503, "Admin login isn't set up yet: the ADMIN_USERS secret is missing or not pasted correctly.");
   const ip = clientIp(request);
-  const since = Date.now() - FAIL_WINDOW_MS;
-  const { n } = await env.DB.prepare("SELECT COUNT(*) AS n FROM login_failures WHERE ip = ? AND at > ?").bind(ip, since).first();
-  if (n >= MAX_FAILS) throw new HttpError(429, "Too many wrong attempts. Wait 15 minutes and try again.");
-
   const user = String(username || "").trim().toLowerCase();
-  if (!adminUsers(env)[user]) console.log("Login: unknown username", user);
+  const tooMany = "Too many wrong attempts. Wait 15 minutes and try again.";
+  if (await countHits(env, "login", ip, FAIL_WINDOW_MS) >= MAX_FAILS) throw new HttpError(429, tooMany);
+  // Also counted per account, so spreading the guessing over many IP addresses does not help.
+  if (user && await countHits(env, "login-user", user, FAIL_WINDOW_MS) >= MAX_FAILS_PER_USER) throw new HttpError(429, tooMany);
+
   const stored = adminUsers(env)[user];
   const ok = stored ? await verifyPassword(password, stored) : false;
   if (!ok) {
+    // The attempted username is never logged: it ends up in Cloudflare's log, and a
+    // mistyped password often lands in that field.
     await env.DB.batch([
-      env.DB.prepare("INSERT INTO login_failures (ip, at) VALUES (?, ?)").bind(ip, Date.now()),
+      env.DB.prepare("INSERT INTO login_failures (ip, at) VALUES (?, ?)").bind(`login:${ip}`, Date.now()),
+      env.DB.prepare("INSERT INTO login_failures (ip, at) VALUES (?, ?)").bind(`login-user:${user}`, Date.now()),
       env.DB.prepare("DELETE FROM login_failures WHERE at < ?").bind(Date.now() - 24 * 3600 * 1000)
     ]);
     throw new HttpError(401, "Wrong username or password.");
   }
-  const token = await sign(env, { u: user, exp: Date.now() + SESSION_DAYS * 86400000 });
+  const now = Date.now();
+  const token = await sign(env, { u: user, iat: now, pw: await passwordStamp(env, stored), exp: now + SESSION_DAYS * 86400000 });
   return { user, cookie: `${COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${SESSION_DAYS * 86400}` };
 }
 

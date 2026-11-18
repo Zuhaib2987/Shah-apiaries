@@ -1,6 +1,6 @@
 import { PRICING, PRODUCTS } from "./catalog.js";
 import { priceCart } from "./pricing.js";
-import { HttpError } from "./http.js";
+import { HttpError, readText, clientIp, rateLimit, recordHit } from "./http.js";
 import { randomId } from "./crypto.js";
 import { isPromoShape, checkPromo, claimPromo, releasePromo } from "./promo.js";
 import { createRazorpayOrder, paymentsEnabled, verifyPaymentSignature, verifyWebhookSignature } from "./razorpay.js";
@@ -60,7 +60,15 @@ async function couponEligible(env, phone) {
   return !row;
 }
 
+// Orders per IP address per hour. Without this one script can fill the database with
+// fake orders, which costs money and buries the real ones. Raised in tests through the
+// env var, so the limit can stay realistic here.
+const ORDER_LIMIT = env => Number(env.ORDER_RATE_LIMIT_PER_HOUR) || 20;
+
 export async function createOrder(env, body, request) {
+  const ip = clientIp(request);
+  await rateLimit(env, "order", ip, ORDER_LIMIT(env), 3600 * 1000,
+    "Too many orders from this connection in the last hour. Please message us on WhatsApp and we will place it for you.");
   const customer = validateCustomer(body.customer);
   const wanted = body.payment === "cod" ? "cod" : "online";
   const method = wanted === "online" && !paymentsEnabled(env) ? "link" : wanted;
@@ -72,7 +80,9 @@ export async function createOrder(env, body, request) {
   const id = await newOrderId(env);
   if (promo) await claimPromo(env, promo.code, id, customer.phone);
   try {
-    return await saveOrder(env, body, { id, customer, method, priced });
+    const saved = await saveOrder(env, body, { id, customer, method, priced });
+    await recordHit(env, "order", ip);
+    return saved;
   } catch (err) {
     if (promo) await releasePromo(env, id).run(); // order failed, so the code stays unused
     throw err;
@@ -115,14 +125,19 @@ async function saveOrder(env, body, { id, customer, method, priced }) {
   return { order: await loadPublicOrder(env, id), razorpay, couponRejected: priced.couponRejected };
 }
 
+// One wording for every failure here. An order number that does not exist and a bad
+// signature used to give different errors, which let anyone test order numbers without
+// knowing the customer's mobile number.
+const PAYMENT_UNCONFIRMED = "We could not confirm this payment. If money was deducted, it will be refunded automatically, or message us with your order number.";
+
 export async function verifyPayment(env, body) {
   const order = await env.DB.prepare("SELECT * FROM orders WHERE id = ?").bind(String(body.orderId || "")).first();
-  if (!order || !["online", "cod"].includes(order.payment_method)) throw new HttpError(404, "Order not found.");
+  if (!order || !["online", "cod"].includes(order.payment_method)) throw new HttpError(400, PAYMENT_UNCONFIRMED);
   if (["paid", "advance_paid"].includes(order.payment_status)) return { order: await loadPublicOrder(env, order.id) };
   // Use the Razorpay order ID stored on our side, not the one sent by the browser.
   const valid = body.razorpay_order_id === order.razorpay_order_id &&
     await verifyPaymentSignature(env, order.razorpay_order_id, body.razorpay_payment_id, body.razorpay_signature);
-  if (!valid) throw new HttpError(400, "We could not confirm this payment. If money was deducted, it will be refunded automatically, or message us with your order number.");
+  if (!valid) throw new HttpError(400, PAYMENT_UNCONFIRMED);
   await markPaid(env, order, String(body.razorpay_payment_id), "customer");
   return { order: await loadPublicOrder(env, order.id) };
 }
@@ -144,7 +159,7 @@ export const rupees = paise => "₹" + (paise / 100).toLocaleString("en-IN", { m
 export const advanceNote = o => `Advance of ${rupees(o.advance)} received. ${rupees(o.total - o.advance)} to pay on delivery`;
 
 export async function handleWebhook(env, request) {
-  const raw = await request.text();
+  const raw = await readText(request, 100000); // Razorpay events are a few KB; cap the rest
   if (!env.RAZORPAY_WEBHOOK_SECRET) throw new HttpError(503, "Webhook secret not configured.");
   if (!await verifyWebhookSignature(env, raw, request.headers.get("x-razorpay-signature"))) throw new HttpError(400, "Invalid signature.");
   const evt = JSON.parse(raw);

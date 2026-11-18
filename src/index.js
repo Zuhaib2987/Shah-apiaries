@@ -1,7 +1,7 @@
 // Shah Apiaries: storefront (./public) + order API + admin API on Cloudflare Workers.
-import { HttpError, json, readJson, checkSameOrigin } from "./http.js";
+import { HttpError, json, readJson, checkSameOrigin, clientIp, rateLimit, recordHit } from "./http.js";
 import { catalogResponse, createOrder, verifyPayment, handleWebhook, trackOrder } from "./orders.js";
-import { getAdmin, requireAdmin, login, logoutCookie } from "./auth.js";
+import { getAdmin, requireAdmin, login, logoutCookie, revokeSessions, SESSION_SCHEMA } from "./auth.js";
 import { summary, listOrders, getOrder, updateOrder, deleteOrder } from "./admin.js";
 import { SCHEMA as PROMO_SCHEMA, seedPromoCodes, checkPromo, listPromos, createPromos, updatePromo } from "./promo.js";
 
@@ -10,6 +10,7 @@ let schemaReady = null;
 function ensureSchema(env) {
   schemaReady ||= (async () => {
     await env.DB.prepare(PROMO_SCHEMA).run();
+    await env.DB.prepare(SESSION_SCHEMA).run();
     await seedPromoCodes(env);
     try { await env.DB.prepare("SELECT advance FROM orders LIMIT 1").all(); }
     catch {
@@ -37,10 +38,17 @@ async function api(request, env, url) {
     return json(await checkPromo(env, request, (await readJson(request)).code));
   }
   if (pathname === "/api/orders/verify" && method === "POST") {
+    const ip = clientIp(request);
+    await rateLimit(env, "verify", ip, 30, 15 * 60 * 1000, "Too many attempts. Please wait 15 minutes.");
+    await recordHit(env, "verify", ip);
     return json(await verifyPayment(env, await readJson(request)));
   }
   let m = pathname.match(/^\/api\/orders\/(SA-[0-9A-Z-]{6,20})$/i);
   if (m && method === "GET") {
+    // Slows down anyone walking through order numbers looking for a real one.
+    const ip = clientIp(request);
+    await rateLimit(env, "track", ip, 30, 15 * 60 * 1000, "Too many lookups. Please wait 15 minutes.");
+    await recordHit(env, "track", ip);
     return json({ order: await trackOrder(env, m[1], url.searchParams.get("phone")) });
   }
   if (pathname === "/api/webhooks/razorpay" && method === "POST") {
@@ -61,6 +69,9 @@ async function api(request, env, url) {
   }
   if (pathname.startsWith("/api/admin/")) {
     const admin = await requireAdmin(request, env);
+    if (pathname === "/api/admin/revoke-sessions" && method === "POST") {
+      return json(await revokeSessions(env, admin), 200, { "set-cookie": logoutCookie });
+    }
     if (pathname === "/api/admin/summary" && method === "GET") return json(await summary(env));
     if (pathname === "/api/admin/orders" && method === "GET") return json(await listOrders(env, url.searchParams));
     m = pathname.match(/^\/api\/admin\/orders\/(SA-[0-9A-Z-]{6,20})$/i);
@@ -87,6 +98,41 @@ export default {
         return json({ error: "Something went wrong on our side. Please try again." }, 500);
       }
     }
-    return env.ASSETS.fetch(request);
+    return withSecurityHeaders(await env.ASSETS.fetch(request));
   }
 };
+
+// Sent with every page and asset.
+//
+// frame-ancestors is the one that matters most: without it any site can load /admin
+// in an invisible frame and collect your clicks on the real buttons underneath.
+//
+// script-src still allows 'unsafe-inline' because the storefront and the admin page
+// keep their JavaScript inline in one file. That is a real limit on what this CSP can
+// stop, but the directives below still block an injected <script src> to somewhere
+// else, plugins, and any attempt to rewrite the page's base URL.
+const CSP = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "frame-ancestors 'none'",
+  "form-action 'self'",
+  "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https:",
+  "connect-src 'self' https://*.razorpay.com",
+  "frame-src https://*.razorpay.com https://api.razorpay.com"
+].join("; ");
+
+function withSecurityHeaders(response) {
+  const res = new Response(response.body, response);
+  res.headers.set("content-security-policy", CSP);
+  res.headers.set("x-frame-options", "DENY");
+  res.headers.set("x-content-type-options", "nosniff");
+  res.headers.set("referrer-policy", "strict-origin-when-cross-origin");
+  res.headers.set("permissions-policy", "geolocation=(), microphone=(), camera=(), payment=(self)");
+  res.headers.set("strict-transport-security", "max-age=31536000; includeSubDomains");
+  res.headers.set("cross-origin-opener-policy", "same-origin");
+  return res;
+}

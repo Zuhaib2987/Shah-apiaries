@@ -249,6 +249,79 @@ await test("without Razorpay keys, admin marks the COD advance, then the balance
 });
 t2.close();
 
+// ----- Security hardening -----
+
+const t3 = await start({ payments: false, env: { ORDER_RATE_LIMIT_PER_HOUR: "3" } });
+const post3 = (path, body, headers = {}) =>
+  fetch(t3.url + path, { method: "POST", headers: { "content-type": "application/json", origin: t3.url, ...headers }, body: JSON.stringify(body) });
+
+await test("pages are served with anti-framing and content-security headers", async () => {
+  for (const path of ["/", "/admin"]) {
+    const r = await fetch(t3.url + path);
+    assert.equal(r.headers.get("x-frame-options"), "DENY", path);
+    assert.match(r.headers.get("content-security-policy") || "", /frame-ancestors 'none'/, path);
+    assert.equal(r.headers.get("x-content-type-options"), "nosniff", path);
+    assert.match(r.headers.get("referrer-policy") || "", /strict-origin/, path);
+  }
+});
+
+await test("order flooding is blocked once the hourly limit is reached", async () => {
+  const one = () => post3("/api/orders", { customer: customer("9700000001"), items: [{ pid: "acacia", vid: "500", qty: 1 }], payment: "cod" }, { "cf-connecting-ip": "192.0.2.50" });
+  for (let i = 0; i < 3; i++) assert.equal((await one()).status, 201, `order ${i + 1} should succeed`);
+  const blocked = await one();
+  assert.equal(blocked.status, 429);
+  assert.match((await blocked.json()).error, /too many orders/i);
+});
+
+await test("verify does not reveal whether an order number exists", async () => {
+  const real = await (await post3("/api/orders", { customer: customer("9700000002"), items: [{ pid: "acacia", vid: "500", qty: 1 }], payment: "cod" }, { "cf-connecting-ip": "192.0.2.51" })).json();
+  const bogus = await post3("/api/orders/verify", { orderId: "SA-260101-ZZZZZ" });
+  const existing = await post3("/api/orders/verify", { orderId: real.order.id, razorpay_signature: "deadbeef" });
+  assert.equal(bogus.status, existing.status, "status must match");
+  assert.equal((await bogus.json()).error, (await existing.json()).error, "message must match");
+});
+
+await test("a changed admin password kills sessions issued before it", async () => {
+  const ck = (await post3("/api/admin/login", { username: "zuhaib", password: "honey-admin-1" })).headers.get("set-cookie").split(";")[0];
+  assert.equal((await fetch(t3.url + "/api/admin/summary", { headers: { cookie: ck } })).status, 200);
+  t3.setPassword("zuhaib", "a-brand-new-password");
+  assert.equal((await fetch(t3.url + "/api/admin/summary", { headers: { cookie: ck } })).status, 401);
+});
+
+await test("signing out everywhere kills sessions on other devices", async () => {
+  const logIn = async () => (await post3("/api/admin/login", { username: "family", password: "honey-admin-2" })).headers.get("set-cookie").split(";")[0];
+  const phone = await logIn(), laptop = await logIn();
+  assert.equal((await fetch(t3.url + "/api/admin/summary", { headers: { cookie: phone } })).status, 200);
+  const rv = await post3("/api/admin/revoke-sessions", {}, { cookie: laptop });
+  assert.equal(rv.status, 200, "revoke failed: " + (await rv.text()));
+  assert.equal((await fetch(t3.url + "/api/admin/summary", { headers: { cookie: phone } })).status, 401, "phone session must die");
+  assert.equal((await fetch(t3.url + "/api/admin/summary", { headers: { cookie: laptop } })).status, 401, "laptop session must die too");
+});
+
+await test("one account is locked after repeated wrong passwords from new addresses", async () => {
+  const tryLogin = i => post3("/api/admin/login", { username: "zuhaib", password: "nope" }, { "cf-connecting-ip": `203.0.113.${i}` });
+  let sawLock = false;
+  for (let i = 1; i <= 12; i++) if ((await tryLogin(i)).status === 429) { sawLock = true; break; }
+  assert.ok(sawLock, "account lockout should fire even though every attempt came from a different address");
+});
+
+await test("a forged x-forwarded-for header does not reset the limits", async () => {
+  const tryLogin = i => post3("/api/admin/login", { username: "family", password: "nope" },
+    { "cf-connecting-ip": "198.51.100.7", "x-forwarded-for": `198.51.100.${i}` });
+  let blocked = false;
+  for (let i = 1; i <= 12; i++) if ((await tryLogin(i)).status === 429) { blocked = true; break; }
+  assert.ok(blocked, "spoofing x-forwarded-for must not buy more attempts");
+});
+
+await test("an oversized webhook body is rejected before it is parsed", async () => {
+  const r = await fetch(t3.url + "/api/webhooks/razorpay", {
+    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ pad: "x".repeat(200000) })
+  });
+  assert.equal(r.status, 413);
+});
+
+t3.close();
+
 for (const [s, n, e] of results) console.log(`${s === "ok" ? "✓" : "✗"} ${n}${e ? "\n    " + e : ""}`);
 const failed = results.filter(r => r[0] !== "ok").length;
 console.log(`\n${results.length - failed} passed, ${failed} failed`);
