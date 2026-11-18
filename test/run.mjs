@@ -39,7 +39,7 @@ let codId, onlineOrder, adminCookie, promoCodes = [];
 
 await test("catalog lists products and online payments", async () => {
   const r = await fetch(t.url + "/api/catalog"); const j = await r.json();
-  assert.equal(r.status, 200); assert.equal(j.products.length, PRODUCTS.length); assert.equal(j.payments.online, true); assert.equal(j.payments.keyId, "rzp_test_mock");
+  assert.equal(r.status, 200); assert.equal(j.products.length, 6); assert.equal(j.payments.online, true); assert.equal(j.payments.keyId, "rzp_test_mock");
 });
 
 const payAdvance = async j => {
@@ -95,6 +95,18 @@ await test("invalid phone is rejected", async () => {
 await test("sold-out size is rejected", async () => {
   const r = await post("/api/orders", { customer: customer(), items: [{ pid: "sulai", vid: "1kg", qty: 1 }], payment: "cod" });
   assert.equal(r.status, 409);
+});
+
+await test("every size of a sold-out product is refused", async () => {
+  // The Tasting Set is out of stock. A hidden Add button is not enough: the server
+  // has to refuse it, because the request can be made without the page.
+  for (const p of PRODUCTS.filter(p => p.variants.every(v => !v.stock))) {
+    for (const v of p.variants) {
+      const r = await post("/api/orders", { customer: customer(), items: [{ pid: p.id, vid: v.id, qty: 1 }], payment: "cod" });
+      assert.equal(r.status, 409, `${p.name} ${v.label} should be refused`);
+      assert.match((await r.json()).error, /sold out/i);
+    }
+  }
 });
 
 await test("online order creates Razorpay order, buy-3 saving applied", async () => {

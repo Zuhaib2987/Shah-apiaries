@@ -189,6 +189,9 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;backgroun
 /* products */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px}
 .card{position:relative;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+/* Nothing in this product is in stock: fade the jar, keep the words readable. */
+.card.is-oos .art{opacity:.55;filter:saturate(.6)}
+.card.is-oos .badge{background:var(--sunk);color:var(--muted);border-color:var(--line)}
 .card .art{position:relative;display:grid;place-items:center;aspect-ratio:1/1;max-width:100%;background:var(--sunk);border:0;padding:22px;width:100%}
 .card .art .jar{width:58%;transition:transform .3s}
 .card:hover .art .jar{transform:translateY(-4px) rotate(-1.5deg)}
@@ -781,7 +784,7 @@ footer{background:var(--surface);border-top:1px solid var(--line);padding-block:
         <ul class="ticks">
           <li><span><b>Custom name tags</b> with the couple's, family's or business name</span></li>
           <li><span><b>For businesses</b>: your logo on the tag, client and staff gifting, delivery to several addresses</span></li>
-          <li><span><b>Valley Trio gift boxes</b>, single jars, or a mix</span></li>
+          <li><span><b>Valley Trio or Tasting Set</b>, or a mix</span></li>
           <li><span><b>Delivered anywhere in India</b>, or picked up in Srinagar</span></li>
         </ul>
       </div>
@@ -901,8 +904,9 @@ footer{background:var(--surface);border-top:1px solid var(--line);padding-block:
 <!-- Overlays -->
 <div class="ov drawer left" id="ov-menu" hidden><div class="panel" role="dialog" aria-modal="true" aria-label="Menu"><div class="phead"><span class="eyebrow">Menu</span><button class="icon-btn" data-close aria-label="Close">✕</button></div><div class="pbody">
   <ul class="menu-list">
-    <li><button data-go="#shop">Shop honey <span class="n">5</span></button></li>
+    <li><button data-go="#shop">Shop honey <span class="n" data-count="products"></span></button></li>
     <li><button data-add="trio">Valley Trio gift box</button></li>
+    <li><button data-add="minis">Tasting Set</button></li>
     <li><button data-go="#find">Honey finder</button></li>
     <li><button data-go="#lab">Lab reports</button></li>
     <li><button data-go="#gifting">Wedding &amp; corporate gifts</button></li>
@@ -1004,16 +1008,22 @@ const PRODUCTS = [
     short:"Three 500 g jars in a gift box with a tasting card.",
     notes:"A tasting flight from the valley floor to the high meadows. Packed in a rigid gift box. Add a gift note at checkout.",
     season:"Current harvest", use:"Eid, Diwali, weddings, corporate gifts",
-    variants:[{id:"box", label:"Gift box, 3 × 500 g", price:1999, mrp:1999, stock:true}] }
+    variants:[{id:"box", label:"Gift box, 3 × 500 g", price:1999, mrp:1999, stock:true}] },
+  { id:"minis", sampleNo:56, name:"Tasting Set", color:"#EFC75B", taste:"gift", badge:"Try all three", gift:true, mini:true,
+    source:"Acacia, Sulai and Gurez multi-floral",
+    short:"Three 100 g jars. The easiest way to find your favourite.",
+    notes:"One small jar of each honey, from the lightest to the boldest. Taste them side by side, then order a full jar of the one you like.",
+    season:"Current harvest", use:"First-time buyers, return gifts, tasting with family",
+    variants:[{id:"set", label:"3 × 100 g", price:549, mrp:599, stock:false}] }
 ];
 
 /* Lab analysis reports (FSSAI Form C) shown on each product page, as online food sellers must.
    Put the PDF in public/reports/ and add its path, e.g. acacia:"/reports/acacia-2026.pdf". */
-const REPORTS = { acacia:"", sulai:"/reports/sulai-inf-honey-sola-2026-10.jpg", multiflora:"", comb:"", trio:"" };
+const REPORTS = { acacia:"", sulai:"/reports/sulai-inf-honey-sola-2026-10.jpg", multiflora:"", comb:"", trio:"", minis:"" };
 
 /* What kind of report each link above is, shown next to it. Use "Form C" only for a formal
    Form C report. An informal lab report must never be labelled Form C. */
-const REPORT_TYPES = { acacia:"Form C", sulai:"informal report", multiflora:"Form C", comb:"Form C", trio:"Form C" };
+const REPORT_TYPES = { acacia:"Form C", sulai:"informal report", multiflora:"Form C", comb:"Form C", trio:"Form C", minis:"Form C" };
 
 /* Honey colour grades (Pfund scale names). Each honey's pfund value above is its index here. */
 const PFUND = [["Water white","#FDF8E1"],["Extra white","#F9EDB8"],["White","#F5E08A"],["Extra light amber","#EFC75B"],["Light amber","#DFA531"],["Amber","#B8711A"],["Dark amber","#6E3A10"]];
@@ -1087,6 +1097,9 @@ const $$ = (s, el=document) => [...el.querySelectorAll(s)];
 const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const inr = n => "₹" + Math.round(n).toLocaleString("en-IN");
 const P = id => PRODUCTS.find(p => p.id === id);
+// A product is buyable only while at least one of its sizes is in stock. Everything
+// that offers an "Add" asks this first, so a sold-out line is never pushed anywhere.
+const inStock = id => !!P(id)?.variants.some(v => v.stock);
 const store = {
   get(k, d){ try { const v = localStorage.getItem("sa_" + k); return v ? JSON.parse(v) : d; } catch(e){ return d; } },
   set(k, v){ try { localStorage.setItem("sa_" + k, JSON.stringify(v)); } catch(e){} }
@@ -1160,6 +1173,26 @@ function rating(pid){
 }
 const fromPrice = p => Math.min(...p.variants.map(v=>v.price));
 
+/* Buttons written straight into the page (the menu, for instance) cannot know what is
+   in stock, and stock comes from the server after load. This turns any "Add" for a
+   sold-out product into a link to its page, and turns it back when stock returns. */
+function syncStaticAdds(){
+  $$("[data-add]").forEach(b => {
+    if (b.closest("#grid, #quizResult, .upsell")) return;   // those are re-rendered anyway
+    const pid = b.dataset.add || b.dataset.wasAdd;
+    if (!pid || !P(pid)) return;
+    if (!inStock(pid)) {
+      if (!b.dataset.wasAdd) { b.dataset.wasAdd = pid; b.dataset.label = b.textContent; }
+      delete b.dataset.add; b.dataset.view = pid;
+      b.textContent = `${b.dataset.label} (sold out)`;
+    } else if (b.dataset.wasAdd) {
+      b.dataset.add = b.dataset.wasAdd; delete b.dataset.view;
+      b.textContent = b.dataset.label;
+      delete b.dataset.wasAdd; delete b.dataset.label;
+    }
+  });
+}
+
 const TASTE_WORDS = ["","Very mild","Mild","Medium","Bold","Very bold"];
 const taste = n => `<div class="taste" aria-label="Taste: ${TASTE_WORDS[n]}">Mild <span class="cells">${[1,2,3,4,5].map(i=>`<i class="${i<=n?"on":""}"></i>`).join("")}</span> Bold</div>`;
 const shareLink = text => `https://wa.me/?text=${encodeURIComponent(text)}`;
@@ -1171,8 +1204,9 @@ function renderGrid(){
   const list = PRODUCTS.filter(p => filter==="all" || p.taste===filter);
   $("#grid").innerHTML = list.map(p => {
     const v = p.variants[0], w = wish.includes(p.id);
-    return `<article class="card">
-      <button class="art" data-view="${p.id}" aria-label="View ${esc(p.name)}">${jar(p)}<span class="badge">${esc(p.badge)}</span></button>
+    const anyStock = p.variants.some(x => x.stock);
+    return `<article class="card${anyStock ? "" : " is-oos"}">
+      <button class="art" data-view="${p.id}" aria-label="View ${esc(p.name)}">${jar(p)}<span class="badge">${anyStock ? esc(p.badge) : "Sold out"}</span></button>
       <button class="icon-btn heart" data-wish="${p.id}" aria-pressed="${w}" aria-label="${w?"Remove from":"Add to"} wishlist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button>
       <div class="body">
         <h3><a href="#" data-view="${p.id}">${esc(p.name)}</a></h3>
@@ -1181,7 +1215,9 @@ function renderGrid(){
         ${p.level?taste(p.level):""}
         ${rating(p.id)}
         <p style="font-size:.93rem">${esc(p.short)}</p>
-        <div class="foot"><span class="price">${p.variants.length>1?"from ":""}${inr(fromPrice(p))}${v.mrp>v.price?`<s>${inr(v.mrp)}</s>`:""}</span><button class="btn btn-honey qa" data-add="${p.id}">Add</button></div>
+        <div class="foot"><span class="price">${p.variants.length>1?"from ":""}${inr(fromPrice(p))}${v.mrp>v.price?`<s>${inr(v.mrp)}</s>`:""}</span>${anyStock
+          ? `<button class="btn btn-honey qa" data-add="${p.id}">Add</button>`
+          : `<button class="btn btn-ghost qa" data-view="${p.id}">Tell me when it's back</button>`}</div>
       </div></article>`;
   }).join("");
 }
@@ -1318,6 +1354,8 @@ function renderCounts(){
   const c = cart.reduce((a,l)=>a+l.qty,0);
   $$('[data-count="cart"]').forEach(el=>{ el.textContent=c; el.hidden = !c && !el.hasAttribute('data-always'); });
   $$('[data-count="wish"]').forEach(el=>{ el.textContent=wish.length; el.hidden=!wish.length; });
+  // Counted from the catalogue, so adding or retiring a product never leaves a stale number.
+  $$('[data-count="products"]').forEach(el=>{ el.textContent = PRODUCTS.length; });
 }
 
 /* ---------- honey finder ---------- */
@@ -1331,7 +1369,7 @@ function renderQuiz(){
   $("#quiz").innerHTML = QUIZ.map((x,i)=>`<div class="q"><p>${i+1}. ${esc(x.q)}</p><div class="chips" role="group" aria-label="${esc(x.q)}">${x.opts.map(([id,label])=>`<button class="chip" data-quiz="${i}|${id}" aria-pressed="${quizAns[i]===id}">${esc(label)}</button>`).join("")}</div></div>`).join("");
   const res = $("#findRes");
   if (Object.keys(quizAns).length < QUIZ.length){
-    res.innerHTML = `<p class="eyebrow">Your match</p><h3>Answer three questions</h3><p class="muted">Your suggested honey appears here.</p>`;
+    res.innerHTML = `<p class="eyebrow">Your match</p><h3>Answer three questions</h3><p class="muted">Your suggested honey appears here.${inStock("minis") ? " Not sure at all? Start with the Tasting Set." : ""}</p>${inStock("minis") ? `<button class="btn btn-ghost qa" data-add="minis" style="justify-self:start">Add Tasting Set</button>` : ""}`;
     return;
   }
   const score = {acacia:0,sulai:0,multiflora:0};
@@ -1341,10 +1379,14 @@ function renderQuiz(){
   const upsell = (pid, eyebrow, text, cta) => { const u = P(pid); return `<div class="upsell">
       <div class="upsell-art">${jar(u)}</div>
       <div class="upsell-txt"><p class="eyebrow">${eyebrow}</p><h4>${esc(u.name)}</h4><p>${text}</p><p class="upsell-price">${inr(fromPrice(u))}</p>
-        <div class="upsell-btns"><button class="btn btn-honey qa" data-add="${pid}">${cta}</button><button class="btn btn-ghost qa" data-view="${pid}">See details</button></div></div></div>`; };
-  const extra = quizAns[2]==="gift" ? upsell("trio", "Giving it as a gift?", "All three honeys in one gift box: Acacia, Sulai and Gurez multi-floral.", "Add the Trio") :
-                `<p class="note">Not for babies under 12 months.</p>`;
-  res.innerHTML = `<p class="eyebrow">Your match</p><div class="row">${jar(p,{single:true})}<div><h3>${esc(p.name)}</h3>${taste(p.level)}</div></div><p>${why}</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-honey qa" data-add="${p.id}">Add to cart</button><button class="btn btn-ghost qa" data-view="${p.id}">See details</button><button class="btn btn-ghost qa" data-quizreset>Start again</button></div>${extra}`;
+        <div class="upsell-btns">${inStock(pid) ? `<button class="btn btn-honey qa" data-add="${pid}">${esc(cta)}</button>` : ""}<button class="btn btn-ghost qa" data-view="${pid}">See details</button></div></div></div>`; };
+  const note = `<p class="note">Not for babies under 12 months.</p>`;
+  const extra = quizAns[2]==="gift" && inStock("trio")
+                  ? upsell("trio", "Giving it as a gift?", "All three honeys in one gift box: Acacia, Sulai and Gurez multi-floral.", "Add the Trio")
+                : quizAns[2]==="me" && inStock("minis")
+                  ? upsell("minis", "First time trying?", "Try all three honeys in 100 g jars and find your favourite before buying a big jar.", "Add Tasting Set")
+                : note;
+  res.innerHTML = `<p class="eyebrow">Your match</p><div class="row">${jar(p,{single:true})}<div><h3>${esc(p.name)}</h3>${taste(p.level)}</div></div><p>${why}</p><div style="display:flex;gap:8px;flex-wrap:wrap">${inStock(p.id) ? `<button class="btn btn-honey qa" data-add="${p.id}">Add to cart</button>` : `<span class="note" style="margin:0">Sold out just now.</span>`}<button class="btn btn-ghost qa" data-view="${p.id}">See details</button><button class="btn btn-ghost qa" data-quizreset>Start again</button></div>${extra}`;
 }
 function renderPfund(){
   $("#pfBar").innerHTML = PFUND.map(([n,c])=>`<span style="background:${c}" title="${n}"></span>`).join("");
@@ -1587,7 +1629,7 @@ async function loadCatalog(){
     d.products.forEach(sp => { const p = P(sp.id); if (!p) return; sp.variants.forEach(sv => { const v = p.variants.find(x=>x.id===sv.id); if (v) Object.assign(v, { price:sv.price, mrp:sv.mrp, stock:sv.stock, label:sv.label }); }); });
     ["freeShippingAbove","shippingFee","codFee","codAdvancePct","codAdvancePctJK","couponCode","couponPct","bulkMinItems","bulkPct","subscribePct","promoPrefixes"].forEach(k => { if (d.pricing[k] !== undefined) CONFIG[k] = d.pricing[k]; });
     API.ok = true; API.online = !!d.payments.online; API.keyId = d.payments.keyId;
-    renderGrid(); renderCart(); renderCounts();
+    renderGrid(); renderCart(); renderCounts(); syncStaticAdds();
     $("#freeShipTxt").textContent = `Free shipping above ${inr(CONFIG.freeShippingAbove)}`;
     if (stack.includes("checkout") && coStep === "form") renderCheckout();
     if (stack.includes("orders")) renderOrders();
@@ -1949,7 +1991,7 @@ function boot(){
   $("#yr").textContent = new Date().getFullYear();
   const wa = $("#waFloat");
   if (CONFIG.whatsapp) wa.href = waLink("Hi Shah Apiaries™, I have a question about your honey."); else wa.hidden = true;
-  renderGrid(); renderCounts(); renderCart(); renderReviews(); renderQuiz(); renderPfund(); renderCalc(); renderGiftPick();
+  renderGrid(); renderCounts(); renderCart(); renderReviews(); renderQuiz(); renderPfund(); renderCalc(); renderGiftPick(); syncStaticAdds();
   $("#guideMeta").textContent = "Guide · updated " + GUIDE_UPDATED; renderReport(listed[0]);
   drawValley(); let rt; addEventListener("resize", ()=>{ clearTimeout(rt); rt=setTimeout(drawValley,150); });
   armExit();
