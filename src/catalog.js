@@ -27,22 +27,22 @@ export const PRODUCTS = [
   {
     id: "acacia", name: "Acacia Honey",
     variants: [
-      { id: "500", label: "500 g", price: 749, mrp: 799, stock: true },
-      { id: "1kg", label: "1 kg", price: 1449, mrp: 1598, stock: true }
+      { id: "500", label: "500 g", price: 650, mrp: 650, stock: true },
+      { id: "1kg", label: "1 kg", price: 1250, mrp: 1250, stock: true }
     ]
   },
   {
     id: "sulai", name: "Sulai Honey",
     variants: [
-      { id: "500", label: "500 g", price: 899, mrp: 949, stock: true },
-      { id: "1kg", label: "1 kg", price: 1749, mrp: 1898, stock: false }
+      { id: "500", label: "500 g", price: 650, mrp: 650, stock: true },
+      { id: "1kg", label: "1 kg", price: 1250, mrp: 1250, stock: false }
     ]
   },
   {
     id: "multiflora", name: "Gurez Multi-Floral",
     variants: [
-      { id: "500", label: "500 g", price: 649, mrp: 699, stock: true },
-      { id: "1kg", label: "1 kg", price: 1249, mrp: 1398, stock: true }
+      { id: "500", label: "500 g", price: 750, mrp: 750, stock: true },
+      { id: "1kg", label: "1 kg", price: 1450, mrp: 1450, stock: true }
     ]
   },
   {

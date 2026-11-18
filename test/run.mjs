@@ -1,6 +1,28 @@
 // API tests. Run with: npm test
 import assert from "node:assert/strict";
 import { start } from "./harness.mjs";
+import { PRICING, PRODUCTS, findVariant } from "../src/catalog.js";
+
+// Expected amounts are worked out from the catalogue rather than typed in, so changing
+// a price does not break a dozen tests. The rules being checked (the advance split, the
+// buy-3 saving, the coupons, free shipping) are still asserted as arithmetic here, and
+// a wrong rule in src/pricing.js still fails, because this is a second implementation.
+const paise = rupees => Math.round(rupees * 100);
+const priceOf = (pid, vid) => paise(findVariant(pid, vid).variant.price);
+function quote(items, { payment = "online", pin = "190008", discountPct = 0 } = {}) {
+  const subtotal = items.reduce((a, [pid, vid, qty = 1]) => a + priceOf(pid, vid) * qty, 0);
+  const count = items.reduce((a, [, , qty = 1]) => a + (qty || 1), 0);
+  const bulk = count >= PRICING.bulkMinItems ? Math.round(subtotal * PRICING.bulkPct / 100) : 0;
+  const discount = Math.max(bulk, discountPct ? Math.round(subtotal * discountPct / 100) : 0);
+  const after = subtotal - discount;
+  const shipping = after >= paise(PRICING.freeShippingAbove) ? 0 : paise(PRICING.shippingFee);
+  const codFee = payment === "cod" ? paise(PRICING.codFee) : 0;
+  const total = after + shipping + codFee;
+  const jk = Number(String(pin).slice(0, 3)) >= 180 && Number(String(pin).slice(0, 3)) <= 193;
+  const pct = payment === "cod" ? (jk ? PRICING.codAdvancePctJK : PRICING.codAdvancePct) : 0;
+  const advance = pct ? Math.min(total, Math.ceil(total * pct / 10000) * 100) : 0;
+  return { subtotal, discount, shipping, codFee, total, advance };
+}
 
 const results = [];
 async function test(name, fn) {
@@ -29,21 +51,26 @@ const payAdvance = async j => {
 await test("J&K COD order asks for a 20% advance online", async () => {
   const r = await post("/api/orders", { customer: customer(), items: [{ pid: "acacia", vid: "500", qty: 1 }], payment: "cod" });
   const j = await r.json(); assert.equal(r.status, 201, JSON.stringify(j));
-  assert.equal(j.order.total, (749 + 80 + 40) * 100);
-  assert.equal(j.order.advance, 17400); assert.equal(j.order.balance, 86900 - 17400); // 20% of 869 = 173.8, rounded up
+  const jk = quote([["acacia", "500"]], { payment: "cod", pin: "190008" });
+  assert.equal(j.order.total, jk.total);
+  assert.equal(j.order.advance, jk.advance); assert.equal(j.order.balance, jk.total - jk.advance);
+  assert.equal(jk.advance, Math.ceil(jk.total * 0.20 / 100) * 100, "J&K advance is 20%, rounded up to whole rupees");
   assert.equal(j.order.status, "pending_payment"); assert.equal(j.order.paymentStatus, "advance_pending");
-  assert.equal(j.razorpay.amount, 17400);
+  assert.equal(j.razorpay.amount, jk.advance);
   codId = j.order.id; assert.match(codId, /^SA-\d{6}-[A-Z0-9]{5}$/);
   const paid = await payAdvance(j);
   assert.equal(paid.order.paymentStatus, "advance_paid"); assert.equal(paid.order.status, "placed");
-  assert.match(paid.order.events.at(-1).note, /₹174 received\. ₹695 to pay on delivery/);
+  const rs = n => "₹" + (n / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+  assert.equal(paid.order.events.at(-1).note, `Advance of ${rs(jk.advance)} received. ${rs(jk.total - jk.advance)} to pay on delivery`);
 });
 
 await test("COD outside J&K asks for a 50% advance (Ladakh counts as outside)", async () => {
   for (const pin of ["110001", "194101"]) {
     const j = await (await post("/api/orders", { customer: { ...customer("9811111111"), pin }, items: [{ pid: "sulai", vid: "500", qty: 1 }], payment: "cod" })).json();
-    assert.equal(j.order.total, (899 + 80 + 40) * 100);
-    assert.equal(j.order.advance, 51000); assert.equal(j.razorpay.amount, 51000); // 50% of 1019 = 509.5, rounded up
+    const q = quote([["sulai", "500"]], { payment: "cod", pin });
+    assert.equal(j.order.total, q.total);
+    assert.equal(j.order.advance, q.advance); assert.equal(j.razorpay.amount, q.advance);
+    assert.equal(q.advance, Math.ceil(q.total * 0.50 / 100) * 100, "outside J&K the advance is 50%, rounded up");
   }
 });
 
@@ -57,7 +84,7 @@ await test("COD order cannot be confirmed before the advance is paid", async () 
 
 await test("browser cannot change prices", async () => {
   const r = await post("/api/orders", { customer: customer(), items: [{ pid: "acacia", vid: "500", qty: 1, price: 1 }], payment: "cod" });
-  assert.equal((await r.json()).order.subtotal, 74900);
+  assert.equal((await r.json()).order.subtotal, priceOf("acacia", "500"), "the price sent by the browser must be ignored");
 });
 
 await test("invalid phone is rejected", async () => {
@@ -73,7 +100,8 @@ await test("sold-out size is rejected", async () => {
 await test("online order creates Razorpay order, buy-3 saving applied", async () => {
   const r = await post("/api/orders", { customer: customer("9123456780"), items: [{ pid: "acacia", vid: "500", qty: 1 }, { pid: "sulai", vid: "500", qty: 1 }, { pid: "multiflora", vid: "1kg", qty: 1 }], payment: "online" });
   const j = await r.json(); assert.equal(r.status, 201, JSON.stringify(j));
-  const sub = (749 + 899 + 1249) * 100, disc = Math.round(sub * 0.1);
+  const sub = priceOf("acacia", "500") + priceOf("sulai", "500") + priceOf("multiflora", "1kg");
+  const disc = Math.round(sub * PRICING.bulkPct / 100);
   assert.equal(j.order.subtotal, sub); assert.equal(j.order.discount, disc); assert.equal(j.order.shipping, 0);
   assert.equal(j.order.status, "pending_payment"); assert.equal(j.razorpay.amount, sub - disc);
   assert.equal(t.rzpOrders.at(-1).receipt, j.order.id);
@@ -105,7 +133,7 @@ await test("webhook payment.captured marks order paid", async () => {
 
 await test("first-order coupon works once per mobile number", async () => {
   const first = await (await post("/api/orders", { customer: customer("9555555555"), items: [{ pid: "acacia", vid: "500", qty: 1 }], coupon: "welcome10", payment: "cod" })).json();
-  assert.equal(first.order.discount, Math.round(74900 * 0.1));
+  assert.equal(first.order.discount, Math.round(priceOf("acacia", "500") * PRICING.couponPct / 100));
   await payAdvance(first); // an order only uses up the coupon once it is paid
   const second = await (await post("/api/orders", { customer: customer("9555555555"), items: [{ pid: "acacia", vid: "500", qty: 1 }], coupon: "WELCOME10", payment: "cod" })).json();
   assert.equal(second.order.discount, 0); assert.equal(second.couponRejected, true);
@@ -184,7 +212,7 @@ await test("a friends & family code gives 20% once, and works again if that orde
   const chk = await post("/api/coupons/check", { code: code.toLowerCase() }); assert.equal(chk.status, 200); assert.equal((await chk.json()).pct, 20);
   const order = () => post("/api/orders", { customer: customer("9833333333"), items: [{ pid: "acacia", vid: "1kg", qty: 1 }], coupon: code, payment: "online" });
   const r1 = await order(); const j1 = await r1.json(); assert.equal(r1.status, 201, JSON.stringify(j1));
-  assert.equal(j1.order.discount, Math.round(144900 * 0.2)); assert.match(j1.order.discountLabel, /Friends & family/);
+  assert.equal(j1.order.discount, Math.round(priceOf("acacia", "1kg") * PRICING.promoPct / 100)); assert.match(j1.order.discountLabel, /Friends & family/);
   const r2 = await order(); assert.equal(r2.status, 409);
   assert.equal((await post("/api/coupons/check", { code })).status, 409);
   const list = await (await fetch(t.url + "/api/admin/codes", { headers: { cookie: adminCookie } })).json();
@@ -195,10 +223,10 @@ await test("a friends & family code gives 20% once, and works again if that orde
 
 await test("friends & family code beats the buy-3 saving and does not block WELCOME10 later", async () => {
   const r = await post("/api/orders", { customer: customer("9844444444"), items: [{ pid: "acacia", vid: "500", qty: 3 }], coupon: promoCodes[1], payment: "online" });
-  const j = await r.json(); assert.equal(j.order.discount, Math.round(74900 * 3 * 0.2));
+  const j = await r.json(); assert.equal(j.order.discount, Math.round(priceOf("acacia", "500") * 3 * PRICING.promoPct / 100));
   await post("/api/orders/verify", { orderId: j.order.id, razorpay_order_id: j.razorpay.orderId, razorpay_payment_id: "pay_PR1", razorpay_signature: t.sign(j.razorpay.orderId, "pay_PR1") });
   const w = await (await post("/api/orders", { customer: customer("9844444444"), items: [{ pid: "acacia", vid: "500", qty: 1 }], coupon: "WELCOME10", payment: "online" })).json();
-  assert.equal(w.order.discount, Math.round(74900 * 0.1));
+  assert.equal(w.order.discount, Math.round(priceOf("acacia", "500") * PRICING.couponPct / 100));
 });
 
 await test("admin can label, disable and create codes", async () => {
@@ -241,7 +269,7 @@ await test("without Razorpay keys, online order becomes a payment-link order", a
 });
 await test("without Razorpay keys, admin marks the COD advance, then the balance", async () => {
   const j = await (await fetch(t2.url + "/api/orders", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ customer: customer(), items: [{ pid: "acacia", vid: "500", qty: 1 }], payment: "cod" }) })).json();
-  assert.equal(j.razorpay, null); assert.equal(j.order.paymentStatus, "advance_pending"); assert.equal(j.order.advance, 17400);
+  assert.equal(j.razorpay, null); assert.equal(j.order.paymentStatus, "advance_pending"); assert.equal(j.order.advance, quote([["acacia", "500"]], { payment: "cod" }).advance);
   const ck = (await fetch(t2.url + "/api/admin/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ username: "zuhaib", password: "honey-admin-1" }) })).headers.get("set-cookie").split(";")[0];
   const mark = async () => (await fetch(`${t2.url}/api/admin/orders/${j.order.id}`, { method: "POST", headers: { "content-type": "application/json", cookie: ck }, body: JSON.stringify({ markPaid: true }) })).json();
   const a = await mark(); assert.equal(a.order.payment_status, "advance_paid"); assert.equal(a.order.status, "placed");
