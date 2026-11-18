@@ -322,6 +322,31 @@ await test("an oversized webhook body is rejected before it is parsed", async ()
 
 t3.close();
 
+// Its own instance: the lockout tests above leave both accounts blocked, and a
+// blocked account answers instantly, which would hide the very gap this measures.
+const t4 = await start({ payments: false });
+await test("a wrong username takes as long to answer as a wrong password", async () => {
+  const time = async (username, i0) => {
+    const runs = [];
+    for (let i = 0; i < 4; i++) {
+      const t0 = performance.now();
+      const r = await fetch(t4.url + "/api/admin/login", {
+        method: "POST",
+        headers: { "content-type": "application/json", origin: t4.url, "cf-connecting-ip": `203.0.114.${i0 + i}` },
+        body: JSON.stringify({ username, password: "definitely-wrong" })
+      });
+      assert.equal(r.status, 401, "expected a plain rejection, not a lockout");
+      runs.push(performance.now() - t0);
+    }
+    return runs.sort((a, b) => a - b)[1];
+  };
+  const unknown = await time("no-such-admin", 10);
+  const known = await time("zuhaib", 50);
+  const ratio = Math.max(unknown, known) / Math.max(0.5, Math.min(unknown, known));
+  assert.ok(ratio < 3, `timing gap leaks which usernames exist: unknown ${unknown.toFixed(1)}ms vs known ${known.toFixed(1)}ms`);
+});
+t4.close();
+
 for (const [s, n, e] of results) console.log(`${s === "ok" ? "✓" : "✗"} ${n}${e ? "\n    " + e : ""}`);
 const failed = results.filter(r => r[0] !== "ok").length;
 console.log(`\n${results.length - failed} passed, ${failed} failed`);

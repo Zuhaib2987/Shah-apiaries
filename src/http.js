@@ -49,8 +49,19 @@ export async function countHits(env, bucket, key, windowMs) {
     .bind(`${bucket}:${key}`, Date.now() - windowMs).first();
   return n;
 }
-export const recordHit = (env, bucket, key) =>
-  env.DB.prepare("INSERT INTO login_failures (ip, at) VALUES (?, ?)").bind(`${bucket}:${key}`, Date.now()).run();
+// Rows older than a day are useless: the longest window here is one hour. Pruning
+// used to happen only on a failed login, which never fires on a quiet shop, so the
+// table grew without limit once ordinary orders and lookups started counting here.
+// One row in fifty does the tidying, which keeps it small without a query per hit.
+export async function recordHit(env, bucket, key) {
+  const now = Date.now();
+  const insert = env.DB.prepare("INSERT INTO login_failures (ip, at) VALUES (?, ?)").bind(`${bucket}:${key}`, now);
+  if (Math.random() < 0.02) {
+    await env.DB.batch([insert, env.DB.prepare("DELETE FROM login_failures WHERE at < ?").bind(now - 24 * 3600 * 1000)]);
+  } else {
+    await insert.run();
+  }
+}
 
 export async function rateLimit(env, bucket, key, max, windowMs, message) {
   if (await countHits(env, bucket, key, windowMs) >= max) throw new HttpError(429, message);

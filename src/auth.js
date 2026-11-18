@@ -7,6 +7,10 @@ const MAX_FAILS = 8;                    // wrong tries per IP...
 const MAX_FAILS_PER_USER = 10;          // ...and per account name, so one password
 const FAIL_WINDOW_MS = 15 * 60 * 1000;  // cannot be guessed forever from many addresses
 
+// Same shape and cost as a real stored hash, matching no password anyone can type.
+// Used only to keep the timing of a wrong username the same as a wrong password.
+const DUMMY_HASH = "pbkdf2_sha256$100000$c2hhaGFwaWFyaWVzLWR1bW15LXNhbHQ=$ZHVtbXktaGFzaC10aGF0LW1hdGNoZXMtbm90aGluZw==";
+
 export const SESSION_SCHEMA = `CREATE TABLE IF NOT EXISTS admin_revocations (
   user TEXT PRIMARY KEY,
   at   INTEGER NOT NULL
@@ -85,8 +89,11 @@ export async function login(request, env, { username, password }) {
   // Also counted per account, so spreading the guessing over many IP addresses does not help.
   if (user && await countHits(env, "login-user", user, FAIL_WINDOW_MS) >= MAX_FAILS_PER_USER) throw new HttpError(429, tooMany);
 
+  // An unknown username used to skip the hash check and answer in a fraction of the
+  // time, which told an attacker which account names are real. Unknown names now go
+  // through the same work against a throwaway hash, so both answer alike.
   const stored = adminUsers(env)[user];
-  const ok = stored ? await verifyPassword(password, stored) : false;
+  const ok = await verifyPassword(password, stored || DUMMY_HASH) && Boolean(stored);
   if (!ok) {
     // The attempted username is never logged: it ends up in Cloudflare's log, and a
     // mistyped password often lands in that field.

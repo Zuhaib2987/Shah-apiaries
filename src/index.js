@@ -117,12 +117,16 @@ const CSP = [
   "object-src 'none'",
   "frame-ancestors 'none'",
   "form-action 'self'",
-  "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com",
+  // Razorpay's checkout pulls its own styles, fonts and frames at payment time, and a
+  // policy that is too tight here breaks paying rather than anything visible in testing.
+  "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://*.razorpay.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.razorpay.com",
+  "font-src 'self' data: https://fonts.gstatic.com https://*.razorpay.com",
   "img-src 'self' data: blob: https:",
   "connect-src 'self' https://*.razorpay.com",
-  "frame-src https://*.razorpay.com https://api.razorpay.com"
+  "frame-src 'self' https://*.razorpay.com",
+  "worker-src 'self' blob:",
+  "manifest-src 'self'"
 ].join("; ");
 
 function withSecurityHeaders(response) {
