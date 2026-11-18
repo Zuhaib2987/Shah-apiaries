@@ -781,7 +781,7 @@ footer{background:var(--surface);border-top:1px solid var(--line);padding-block:
         <ul class="ticks">
           <li><span><b>Custom name tags</b> with the couple's, family's or business name</span></li>
           <li><span><b>For businesses</b>: your logo on the tag, client and staff gifting, delivery to several addresses</span></li>
-          <li><span><b>Valley Trio or Tasting Set</b>, or a mix</span></li>
+          <li><span><b>Valley Trio gift boxes</b>, single jars, or a mix</span></li>
           <li><span><b>Delivered anywhere in India</b>, or picked up in Srinagar</span></li>
         </ul>
       </div>
@@ -903,7 +903,6 @@ footer{background:var(--surface);border-top:1px solid var(--line);padding-block:
   <ul class="menu-list">
     <li><button data-go="#shop">Shop honey <span class="n">5</span></button></li>
     <li><button data-add="trio">Valley Trio gift box</button></li>
-    <li><button data-add="minis">Tasting Set</button></li>
     <li><button data-go="#find">Honey finder</button></li>
     <li><button data-go="#lab">Lab reports</button></li>
     <li><button data-go="#gifting">Wedding &amp; corporate gifts</button></li>
@@ -1005,22 +1004,16 @@ const PRODUCTS = [
     short:"Three 500 g jars in a gift box with a tasting card.",
     notes:"A tasting flight from the valley floor to the high meadows. Packed in a rigid gift box. Add a gift note at checkout.",
     season:"Current harvest", use:"Eid, Diwali, weddings, corporate gifts",
-    variants:[{id:"box", label:"Gift box, 3 × 500 g", price:1999, mrp:1999, stock:true}] },
-  { id:"minis", sampleNo:56, name:"Tasting Set", color:"#EFC75B", taste:"gift", badge:"Try all three", gift:true, mini:true,
-    source:"Acacia, Sulai and Gurez multi-floral",
-    short:"Three 100 g jars. The easiest way to find your favourite.",
-    notes:"One small jar of each honey, from the lightest to the boldest. Taste them side by side, then order a full jar of the one you like.",
-    season:"Current harvest", use:"First-time buyers, return gifts, tasting with family",
-    variants:[{id:"set", label:"3 × 100 g", price:549, mrp:599, stock:true}] }
+    variants:[{id:"box", label:"Gift box, 3 × 500 g", price:1999, mrp:1999, stock:true}] }
 ];
 
 /* Lab analysis reports (FSSAI Form C) shown on each product page, as online food sellers must.
    Put the PDF in public/reports/ and add its path, e.g. acacia:"/reports/acacia-2026.pdf". */
-const REPORTS = { acacia:"", sulai:"/reports/sulai-inf-honey-sola-2026-10.jpg", multiflora:"", comb:"", trio:"", minis:"" };
+const REPORTS = { acacia:"", sulai:"/reports/sulai-inf-honey-sola-2026-10.jpg", multiflora:"", comb:"", trio:"" };
 
 /* What kind of report each link above is, shown next to it. Use "Form C" only for a formal
    Form C report. An informal lab report must never be labelled Form C. */
-const REPORT_TYPES = { acacia:"Form C", sulai:"informal report", multiflora:"Form C", comb:"Form C", trio:"Form C", minis:"Form C" };
+const REPORT_TYPES = { acacia:"Form C", sulai:"informal report", multiflora:"Form C", comb:"Form C", trio:"Form C" };
 
 /* Honey colour grades (Pfund scale names). Each honey's pfund value above is its index here. */
 const PFUND = [["Water white","#FDF8E1"],["Extra white","#F9EDB8"],["White","#F5E08A"],["Extra light amber","#EFC75B"],["Light amber","#DFA531"],["Amber","#B8711A"],["Dark amber","#6E3A10"]];
@@ -1338,7 +1331,7 @@ function renderQuiz(){
   $("#quiz").innerHTML = QUIZ.map((x,i)=>`<div class="q"><p>${i+1}. ${esc(x.q)}</p><div class="chips" role="group" aria-label="${esc(x.q)}">${x.opts.map(([id,label])=>`<button class="chip" data-quiz="${i}|${id}" aria-pressed="${quizAns[i]===id}">${esc(label)}</button>`).join("")}</div></div>`).join("");
   const res = $("#findRes");
   if (Object.keys(quizAns).length < QUIZ.length){
-    res.innerHTML = `<p class="eyebrow">Your match</p><h3>Answer three questions</h3><p class="muted">Your suggested honey appears here. Not sure at all? Start with the Tasting Set.</p><button class="btn btn-ghost qa" data-add="minis" style="justify-self:start">Add Tasting Set</button>`;
+    res.innerHTML = `<p class="eyebrow">Your match</p><h3>Answer three questions</h3><p class="muted">Your suggested honey appears here.</p>`;
     return;
   }
   const score = {acacia:0,sulai:0,multiflora:0};
@@ -1350,7 +1343,6 @@ function renderQuiz(){
       <div class="upsell-txt"><p class="eyebrow">${eyebrow}</p><h4>${esc(u.name)}</h4><p>${text}</p><p class="upsell-price">${inr(fromPrice(u))}</p>
         <div class="upsell-btns"><button class="btn btn-honey qa" data-add="${pid}">${cta}</button><button class="btn btn-ghost qa" data-view="${pid}">See details</button></div></div></div>`; };
   const extra = quizAns[2]==="gift" ? upsell("trio", "Giving it as a gift?", "All three honeys in one gift box: Acacia, Sulai and Gurez multi-floral.", "Add the Trio") :
-                quizAns[2]==="me" ? upsell("minis", "First time trying?", "Try all three honeys in 100 g jars and find your favourite before buying a big jar.", "Add Tasting Set") :
                 `<p class="note">Not for babies under 12 months.</p>`;
   res.innerHTML = `<p class="eyebrow">Your match</p><div class="row">${jar(p,{single:true})}<div><h3>${esc(p.name)}</h3>${taste(p.level)}</div></div><p>${why}</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-honey qa" data-add="${p.id}">Add to cart</button><button class="btn btn-ghost qa" data-view="${p.id}">See details</button><button class="btn btn-ghost qa" data-quizreset>Start again</button></div>${extra}`;
 }

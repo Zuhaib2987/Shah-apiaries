@@ -39,7 +39,7 @@ let codId, onlineOrder, adminCookie, promoCodes = [];
 
 await test("catalog lists products and online payments", async () => {
   const r = await fetch(t.url + "/api/catalog"); const j = await r.json();
-  assert.equal(r.status, 200); assert.equal(j.products.length, 6); assert.equal(j.payments.online, true); assert.equal(j.payments.keyId, "rzp_test_mock");
+  assert.equal(r.status, 200); assert.equal(j.products.length, PRODUCTS.length); assert.equal(j.payments.online, true); assert.equal(j.payments.keyId, "rzp_test_mock");
 });
 
 const payAdvance = async j => {
@@ -176,7 +176,7 @@ await test("second admin user works too", async () => {
 });
 
 await test("unpaid online order cannot be packed until marked paid", async () => {
-  const o = await (await post("/api/orders", { customer: customer("9444444444"), items: [{ pid: "minis", vid: "set", qty: 1 }], payment: "online" })).json();
+  const o = await (await post("/api/orders", { customer: customer("9444444444"), items: [{ pid: "comb", vid: "250", qty: 1 }], payment: "online" })).json();
   assert.equal((await post(`/api/admin/orders/${o.order.id}`, { status: "packed" }, { cookie: adminCookie })).status, 409);
   const paid = await (await post(`/api/admin/orders/${o.order.id}`, { markPaid: true }, { cookie: adminCookie })).json();
   assert.equal(paid.order.payment_status, "paid"); assert.equal(paid.order.status, "placed");
